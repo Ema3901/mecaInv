@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventario Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link href="css/style.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="sidebar-header" title="Menú">
+        Inventario
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> Inventario</a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
+          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
+          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+        </ul>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
+        <!-- Título -->
+        <h1>Inventario</h1>
+
+        <!-- Caja de Usuario -->
+<div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+  <img src="img/stock.jpg" alt="User Avatar" id="profileDropdown"/>
+  <span>Ann Lee</span>
+  <i class="fas fa-chevron-down ml-2"></i>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+    <li>
+      <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">Cerrar sesión</a></li>
+    </li>
+  </ul>
+</div>
+      </header>
+
+      <!-- Línea divisoria -->
+      <div class="divider"></div>
+
+      <!-- FORMULARIO AGREGAR PRODUCTO -->
+      <section class="add-product-section mb-4">
+        <form id="addProductForm" class="row g-3" novalidate>
+          <div class="col-md-4">
+            <label for="articulo" class="form-label">Artículo</label>
+            <input type="text" class="form-control" id="articulo" name="articulo" required />
+          </div>
+          <div class="col-md-4">
+            <label for="modelo" class="form-label">Modelo</label>
+            <input type="text" class="form-control" id="modelo" name="modelo" required />
+          </div>
+          <div class="col-md-4">
+            <label for="edificio" class="form-label">Edificio</label>
+            <select class="form-select" id="edificio" name="edificio" required>
+              <option value="" selected>Selecciona...</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="area" class="form-label">Área</label>
+            <select class="form-select" id="area" name="area" required>
+              <option value="" selected>Selecciona...</option>
+              <option value="sala_maestros">Sala de maestros</option>
+              <option value="aula">Aula</option>
+              <option value="laboratorio">Laboratorio</option>
+              <option value="bodega">Bodega</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status" required>
+              <option value="" selected>Selecciona...</option>
+              <option value="bueno">Bueno</option>
+              <option value="dañado">Dañado</option>
+              <option value="pendiente">Pendiente</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 d-flex align-items-center pt-4">
+            <input type="checkbox" class="form-check-input" id="check" name="check" />
+            <label for="check" class="form-check-label ms-2">Check</label>
+          </div>
+
+          <div class="col-md-6">
+            <label for="etiquetado" class="form-label">Etiquetado</label>
+            <select class="form-select" id="etiquetado" name="etiquetado" required>
+              <option value="" selected>Selecciona...</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="tipo" class="form-label">Tipo</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+              <option value="" selected>Selecciona...</option>
+              <option value="cons">Cons</option>
+              <option value="cont">Cont</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="marca" class="form-label">Marca</label>
+            <input type="text" class="form-control" id="marca" name="marca" />
+          </div>
+
+          <div class="col-12">
+            <label for="observaciones" class="form-label">Observaciones</label>
+            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+          </div>
+
+          <div class="btn-group-custom col-12">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" id="btnAddAnother" class="btn btn-success">Agregar otro producto</button>
+            <button type="reset" class="btn btn-secondary">Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Lista productos agregados -->
+      <section id="productList" class="mb-5" style="display:none;">
+        <h2>Productos agregados</h2>
+        <div id="productsContainer"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Bootstrap JS Bundle (incluye Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+
+  <script src="js/logout.js"></script>
+
+  <script>
+    (() => {
+      const form = document.getElementById('addProductForm');
+      const btnAddAnother = document.getElementById('btnAddAnother');
+      const productsContainer = document.getElementById('productsContainer');
+      const productListSection = document.getElementById('productList');
+
+      // Función para obtener datos del formulario como objeto
+      function getFormData() {
+        return {
+          articulo: form.articulo.value.trim(),
+          modelo: form.modelo.value.trim(),
+          edificio: form.edificio.value,
+          area: form.area.value,
+          status: form.status.value,
+          check: form.check.checked,
+          etiquetado: form.etiquetado.value,
+          tipo: form.tipo.value,
+          marca: form.marca.value.trim(),
+          observaciones: form.observaciones.value.trim()
+        };
+      }
+
+      // Validar campos requeridos
+      function isFormValid() {
+        return form.checkValidity();
+      }
+
+      // Guardar productos en localStorage
+      function saveProducts(products) {
+        localStorage.setItem('addedProducts', JSON.stringify(products));
+      }
+
+      // Obtener productos guardados de localStorage
+      function loadProducts() {
+        const stored = localStorage.getItem('addedProducts');
+        return stored ? JSON.parse(stored) : [];
+      }
+
+      // Renderizar lista productos
+      function renderProducts() {
+        const products = loadProducts();
+        productsContainer.innerHTML = '';
+        if (products.length === 0) {
+          productListSection.style.display = 'none';
+          return;
+        }
+        productListSection.style.display = 'block';
+
+        products.forEach((prod, index) => {
+          const div = document.createElement('div');
+          div.className = 'product-item';
+
+          const info = `
+            <div class="product-info">
+              <strong>${prod.articulo}</strong> | Modelo: ${prod.modelo} | Edificio: ${prod.edificio} | Área: ${prod.area} | Status: ${prod.status} | Marca: ${prod.marca || 'N/A'}
+            </div>
+          `;
+
+          const btnRemove = document.createElement('button');
+          btnRemove.className = 'btn-remove';
+          btnRemove.title = 'Eliminar producto';
+          btnRemove.innerHTML = '<i class="fas fa-trash-alt"></i>';
+          btnRemove.addEventListener('click', () => {
+            removeProduct(index);
+          });
+
+          div.innerHTML = info;
+          div.appendChild(btnRemove);
+
+          productsContainer.appendChild(div);
+        });
+      }
+
+      // Quitar producto de la lista
+      function removeProduct(index) {
+        let products = loadProducts();
+        products.splice(index, 1);
+        saveProducts(products);
+        renderProducts();
+      }
+
+      // Limpiar formulario para nuevo producto
+      function clearForm() {
+        form.reset();
+      }
+
+      // Evento para agregar producto a la lista y guardar en cache
+      btnAddAnother.addEventListener('click', e => {
+        e.preventDefault();
+        if (!isFormValid()) {
+          form.reportValidity();
+          return;
+        }
+        const product = getFormData();
+        let products = loadProducts();
+        products.push(product);
+        saveProducts(products);
+        renderProducts();
+        clearForm();
+        form.articulo.focus();
+      });
+
+      // Evento submit para "Guardar" producto (puedes modificar aquí lo que haga)
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!isFormValid()) {
+          form.reportValidity();
+          return;
+        }
+        // Aquí puedes hacer lo que necesites con el producto actual, ej:
+        alert('Producto guardado correctamente:\n' + JSON.stringify(getFormData(), null, 2));
+        clearForm();
+        form.articulo.focus();
+      });
+
+      // Render inicial
+      renderProducts();
+    })();
+  </script>
+</body>
+</html>

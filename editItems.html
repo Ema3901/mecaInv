@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editar Productos</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link href="css/style.css" rel="stylesheet" />
+
+  <style>
+.btn {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.375rem;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="sidebar-header" title="Menú">
+        <i class="fas fa-bars"></i> Inventario
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> Inventario</a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
+          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
+          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
+        <h1>Editar Productos</h1>
+      </header>
+
+      <div class="divider"></div>
+
+      <!-- Lista de productos seleccionados -->
+      <div id="selectedProductsList"></div>
+
+      <!-- Formulario de edición -->
+      <form id="editForm">
+        <!-- Campos de edición -->
+        <div class="form-group">
+          <label for="articulo">Artículo:</label>
+          <input type="text" id="articulo" name="articulo" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label for="modelo">Modelo:</label>
+          <input type="text" id="modelo" name="modelo" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label for="edificio">Edificio:</label>
+          <input type="text" id="edificio" name="edificio" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label for="area">Área:</label>
+          <input type="text" id="area" name="area" class="form-control" required />
+        </div>
+        <!-- Más campos aquí (Status, Check, Etiquetado, etc.) -->
+
+        <button type="button" class="btn btn-primary" onclick="nextProduct()">Siguiente</button>
+        <button type="button" class="btn btn-success" onclick="submitChanges()">Enviar todos</button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancelar</button>
+      </form>
+    </main>
+  </div>
+
+  <!-- Bootstrap JS Bundle (incluye Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+  <script src="js/editItems.js"></script>
+</body>
+</html>

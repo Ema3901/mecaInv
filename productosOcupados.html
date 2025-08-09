@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Productos Ocupados</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link href="css/style.css" rel="stylesheet" />
+  <style>
+    .badge-prof {
+      background-color: var(--primary-green, #2fa46e);
+      color: white;
+      padding: 0.4em 0.7em;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        Inventario
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> Inventario</a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
+          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
+          <li><a href="productosOcupados.html" class="active"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
+        <h1>Productos prestados</h1>
+        <div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="img/stock.jpg" alt="User Avatar" id="profileDropdown"/>
+          <span>Ann Lee</span>
+          <i class="fas fa-chevron-down ml-2"></i>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">Cerrar sesión</a></li>
+          </ul>
+        </div>
+      </header>
+
+      <div class="divider"></div>
+
+      <div class="table-container mt-3">
+        <table id="ocupadosTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Artículo</th>
+              <th>Profesor</th>
+              <th>Nombre de alumno</th>
+              <th>Matrícula de alumno</th>
+              <th>Fecha de préstamo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Llenado por JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="mensajeFinal" class="text-center py-5" style="display: none;">
+        <i class="fas fa-check-circle mb-3 text-success" style="font-size: 3rem;"></i>
+        <h2 class="text-success">Todos los productos han sido devueltos</h2>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const ocupados = [
+      {
+        ID: 261398,
+        ARTICULO: "Laptop HP",
+        PROFESOR: "Mtro. Juan Pérez",
+        ALUMNO: "Paquito",
+        MATRICULA: "1234567890",
+        FECHA: "2025-06-10",
+        OBSERVACIONES: ""
+      },
+      {
+        ID: 261401,
+        ARTICULO: "Proyector Epson",
+        PROFESOR: "Mtra. Laura Gómez",
+        ALUMNO: "Paquito",
+        MATRICULA: "1234567890",
+        FECHA: "2025-06-09",
+        OBSERVACIONES: ""
+      }
+    ];
+
+    const tbody = document.querySelector('#ocupadosTable tbody');
+
+    function renderOcupados() {
+      tbody.innerHTML = '';
+
+      ocupados.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-index', index);
+
+        tr.innerHTML = `
+          <td>${item.ID}</td>
+          <td>${item.ARTICULO}</td>
+          <td><span class="badge-prof">${item.PROFESOR}</span></td>
+          <td>${item.ALUMNO}</td>
+          <td>${item.MATRICULA}</td>
+          <td>${item.FECHA}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-danger" onclick="marcarDevuelto(${index})">
+              <i class="fas fa-undo-alt"></i> Marcar como devuelto
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      const mensaje = document.getElementById('mensajeFinal');
+      document.getElementById('ocupadosTable').style.display = ocupados.length ? 'table' : 'none';
+      mensaje.style.display = ocupados.length ? 'none' : 'block';
+    }
+
+    function marcarDevuelto(index) {
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      ocupados[index].OBSERVACIONES = `Devuelto por ${ocupados[index].PROFESOR} el ${fechaHoy}`;
+      console.log(ocupados[index].OBSERVACIONES);
+      ocupados.splice(index, 1);
+      renderOcupados();
+    }
+
+    renderOcupados();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+  <script src="js/logout.js"></script>
+</body>
+</html>
