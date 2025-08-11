@@ -137,12 +137,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Crear select de estado con estilos mejorados
     function createStatusSelect(currentStatus, index) {
         return `
-            <select class="form-select form-select-sm status-select" 
-                    onchange="actualizarClaseSelect(this)" 
-                    data-index="${index}">
-                <option value="BUENA" ${currentStatus === "BUENA" ? "selected" : ""}>✅ BUENA</option>
-                <option value="DAÑADA" ${currentStatus === "DAÑADA" ? "selected" : ""}>❌ DAÑADA</option>
-            </select>
         `;
     }
 
@@ -275,102 +269,78 @@ document.addEventListener('DOMContentLoaded', async () => {
             approveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Aprobando...';
             approveButton.disabled = true;
 
-            // Preparar datos actualizados - probar con ambos formatos
+            // Preparar datos actualizados - CORREGIDO según la estructura real
             const updatedProduct = {
                 ...pendientes[index],
-                // Probar enviando como ID numérico primero
-                PendingStatus: 2, // FK 2 = Realizado
-                Status: selectStatus.value, // Este parece ser texto (BUENA/DAÑADA)
-                LabelStatus: parseInt(selectLabel.value), // FK numérico
-                observations: textareaObs.value.trim() || null, // null si está vacío
+                // Campos confirmados que existen en la API:
+                PendingStatus: 2, // FK 2 = Realizado (funciona con IDs numéricos)
+                LabelStatus: parseInt(selectLabel.value), // FK para estado de etiqueta
+                observations: textareaObs.value.trim() || null,
+                
+                // IMPORTANTE: ¿Dónde se guarda el estado físico BUENA/DAÑADA?
+                // Opciones posibles según tu estructura:
+                // Status: selectStatus.value, // Si este campo es para físico
+                // O tal vez hay otro campo como physical_condition, condition_status, etc.
+                
+                // Por ahora mantener el Status como está y agregar campos adicionales
+                Status: pendientes[index].Status, // Mantener el estado actual (Activo/Inactivo)
+                
+                // Intentar con un campo personalizado para estado físico
+                physical_condition: selectStatus.value, // BUENA/DAÑADA
+                
+                // Campos de auditoría
                 last_review_date: new Date().toISOString(),
                 reviewed_by: getCurrentUser()
             };
 
-            // También preparar versión con nombres de texto por si la API los espera así
-            const updatedProductWithNames = {
-                ...pendientes[index],
-                PendingStatus: "Realizado", // Como texto
-                Status: selectStatus.value,
-                LabelStatus: selectLabel.value === "1" ? "Bien" : 
-                           selectLabel.value === "2" ? "No" : "Dañada",
-                observations: textareaObs.value.trim() || null,
-                last_review_date: new Date().toISOString(),
-                reviewed_by: getCurrentUser()
-            };
+            console.log('=== ANÁLISIS DE CAMPOS ===');
+            console.log('Campo Status original:', pendientes[index].Status);
+            console.log('Campo LabelStatus original:', pendientes[index].LabelStatus);
+            console.log('Campo PendingStatus original:', pendientes[index].PendingStatus);
+            console.log('¿Hay campo para estado físico?');
+            console.log('Todos los campos del producto:', Object.keys(pendientes[index]));
+            console.log('===========================');
 
             console.log('=== DATOS A ENVIAR AL SERVIDOR ===');
             console.log('Producto original:', pendientes[index]);
-            console.log('Opción 1 - Con IDs numéricos:', updatedProduct);
-            console.log('Opción 2 - Con nombres de texto:', updatedProductWithNames);
+            console.log('Producto actualizado:', updatedProduct);
             console.log('Cambios realizados:');
             console.log(`  - PendingStatus: ${pendientes[index].PendingStatus} → ${updatedProduct.PendingStatus}`);
-            console.log(`  - Status: ${pendientes[index].Status} → ${updatedProduct.Status}`);
             console.log(`  - LabelStatus: ${pendientes[index].LabelStatus} → ${updatedProduct.LabelStatus}`);
+            console.log(`  - Estado físico (physical_condition): → ${updatedProduct.physical_condition}`);
             console.log(`  - Observations: "${pendientes[index].observations}" → "${updatedProduct.observations}"`);
             console.log('==================================');
 
-            // Intentar primero con IDs numéricos
-            console.log('Enviando con IDs numéricos...');
+            // Enviar actualización (ya sabemos que funciona con IDs numéricos)
+            console.log('Enviando actualización...');
+            
+            const response = await fetch(`${API_BASE_URL}/${updatedProduct.id_unit}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedProduct)
+            });
 
-            // Función para intentar actualizar con diferentes formatos
-            async function intentarActualizacion(dataToSend, formatName) {
-                console.log(`Intentando actualización con formato: ${formatName}`);
-                
-                const response = await fetch(`${API_BASE_URL}/${dataToSend.id_unit}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(dataToSend)
-                });
+            console.log('=== RESPUESTA DEL SERVIDOR ===');
+            console.log('Status HTTP:', response.status);
+            console.log('Status Text:', response.statusText);
 
-                console.log(`=== RESPUESTA DEL SERVIDOR (${formatName}) ===`);
-                console.log('Status HTTP:', response.status);
-                console.log('Status Text:', response.statusText);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.log('Error response body:', errorText);
-                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}. Body: ${errorText}`);
-                }
-
-                // Manejar respuesta
-                const responseText = await response.text();
-                console.log('Respuesta raw del servidor:', responseText);
-
-                let parsedResponse;
-                if (responseText.trim()) {
-                    try {
-                        parsedResponse = JSON.parse(responseText);
-                        console.log("Respuesta parseada (JSON):", parsedResponse);
-                    } catch (jsonError) {
-                        console.log("La respuesta no es JSON, pero la operación fue exitosa");
-                        parsedResponse = { success: true, message: responseText };
-                    }
-                } else {
-                    console.log("Respuesta vacía (operación exitosa)");
-                    parsedResponse = { success: true, message: "Actualización exitosa" };
-                }
-
-                return parsedResponse;
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('Error response body:', errorText);
+                throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
             }
 
-            // Intentar actualización
-            let updatedResponse;
-            try {
-                // Primero intentar con IDs numéricos
-                updatedResponse = await intentarActualizacion(updatedProduct, "IDs numéricos");
-            } catch (firstError) {
-                console.log('Falló con IDs numéricos, intentando con nombres de texto...');
-                try {
-                    // Si falla, intentar con nombres de texto
-                    updatedResponse = await intentarActualizacion(updatedProductWithNames, "nombres de texto");
-                } catch (secondError) {
-                    console.log('Falló con ambos formatos');
-                    throw secondError;
-                }
-            }
+            // Manejar respuesta (204 = No Content, operación exitosa)
+            const responseText = await response.text();
+            console.log('Respuesta raw del servidor:', responseText || '[Respuesta vacía - OK]');
+            
+            const updatedResponse = { 
+                success: true, 
+                status: response.status,
+                message: response.status === 204 ? "Actualización exitosa" : responseText 
+            };
 
             // Actualizar array local y rerender
             pendientes.splice(index, 1); // Remover producto aprobado
