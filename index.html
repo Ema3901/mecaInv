@@ -41,39 +41,37 @@
       <div class="divider"></div>
 
       <!-- Filtros y búsqueda -->
-       
-<div class="controls d-flex flex-wrap align-items-center gap-3 mb-3">
-  <div class="search-box flex-grow-1 position-relative">
-    <div class="search-wrapper">
-      <i class="fas fa-search"></i>
-      <input type="text" id="busquedaInput" placeholder="Buscar por nombre o ID" />
-      <i class="fas fa-times-circle clear-icon" style="position: absolute; right: 10px; cursor: pointer; color: #aaa;" onclick="limpiarBusqueda()"></i>
-    </div>
-  </div>
+      <div class="controls d-flex flex-wrap align-items-center gap-3 mb-3">
+        <div class="search-box flex-grow-1 position-relative">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busquedaInput" placeholder="Buscar por nombre o ID" />
+            <i class="fas fa-times-circle clear-icon" style="position: absolute; right: 10px; cursor: pointer; color: #aaa;" onclick="limpiarBusqueda()"></i>
+          </div>
+        </div>
 
-  <div class="filters-header d-flex justify-content-between w-100">
-    <div class="filters d-flex gap-2 align-items-center">
-      <button class="btn-filter" data-bs-toggle="modal" data-bs-target="#filterModal">
-        <i class="fas fa-filter"></i> Filtrar
-      </button>
-      <button class="btn-filter" aria-label="Restablecer filtros" onclick="resetFilters()">
-        Restablecer <i class="fas fa-sync-alt"></i>
-      </button>
-    </div>
+        <div class="filters-header d-flex justify-content-between w-100">
+          <div class="filters d-flex gap-2 align-items-center">
+            <button class="btn-filter" data-bs-toggle="modal" data-bs-target="#filterModal">
+              <i class="fas fa-filter"></i> Filtrar
+            </button>
+            <button class="btn-filter" aria-label="Restablecer filtros" onclick="resetFilters()">
+              Restablecer <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
 
-    <div class="header-actions mb-3 d-flex gap-2">
-      <button class="btn btn-danger">Desactivar</button>
-      <button class="btn btn-secondary" onclick="editSelectedProducts()">Editar</button>
-      <button class="btn btn-success" onclick="solicitarPrestamo()">
-        <i class="fas fa-user-plus"></i> Solicitar préstamo
-      </button>
-      <button class="btn btn-primary" onclick="window.location.href='additem.html'">
-        <i class="fas fa-plus"></i> Nuevos Productos
-      </button>
-    </div>
-  </div>
-</div>
-
+          <div class="header-actions mb-3 d-flex gap-2">
+            <button class="btn btn-danger" id="desactivarBtn">Desactivar</button>
+            <button class="btn btn-secondary" onclick="editSelectedProducts()">Editar</button>
+            <button class="btn btn-success" onclick="solicitarPrestamo()">
+              <i class="fas fa-user-plus"></i> Solicitar préstamo
+            </button>
+            <button class="btn btn-primary" onclick="window.location.href='additem.html'">
+              <i class="fas fa-plus"></i> Nuevos Productos
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="table-container">
         <table id="inventoryTable">
@@ -100,26 +98,6 @@
               <td>Dirección</td>
               <td>BUENA</td>
               <td>SI</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" /></td>
-              <td>261385</td>
-              <td>Proyector Epson</td>
-              <td>EB-X41</td>
-              <td>B</td>
-              <td>Laboratorio</td>
-              <td>BUENA</td>
-              <td>NO</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" /></td>
-              <td>261386</td>
-              <td>Laptop HP</td>
-              <td>250 G7</td>
-              <td>A</td>
-              <td>Sala de maestros</td>
-              <td>DAÑADA</td>
-              <td>NO</td>
             </tr>
           </tbody>
         </table>
@@ -175,18 +153,19 @@
     </div>
   </div>
 
-  <!-- JS -->
+  <!--  JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <script src="js/mobile.js"></script>
   <script src="js/script.js"></script>
   <script src="js/logout.js"></script>
-  <script src="js/index.js"></script>
   <script src="js/buscador.js"></script>
   <script src="js/apartado.js"></script>
-  <script src="server/db.js"></script>
-  <script src="server/server.js"></script>
-
+  <script src="js/botonDesc.js"></script>
+  <script src="js/desacProduc.js"></script>
+  <script src="js/product_select.js"></script>
+  <script src="js/session-manager.js"></script>
 </body>
 </html>

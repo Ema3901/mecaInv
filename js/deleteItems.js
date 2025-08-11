@@ -1,173 +1,156 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const eliminados = [
-    {
-      CHECK: "NO",
-      STATUS: "DAÑADA",
-      LABEL: "SI",
-      ID: 261300,
-      ARTICULO: "Impresora dañada",
-      MODELO: "HP 1015",
-      OBSERVACIONES: "Ya no imprime correctamente",
-      AREA: "Oficina",
-      RESGUARDANTE: "LIC. SANDRA TORRES",
-      EDIFICIO: "A",
-      TIPO: "Cont",
-      MARCA: "HP"
-    },
-    {
-      CHECK: "SI",
-      STATUS: "BUENA",
-      LABEL: "NO",
-      ID: 261301,
-      ARTICULO: "Proyector antiguo",
-      MODELO: "Epson 3200",
-      OBSERVACIONES: "Funcionando pero desactualizado",
-      AREA: "Aula 3",
-      RESGUARDANTE: "ING. LUIS RIVERA",
-      EDIFICIO: "B",
-      TIPO: "Cons",
-      MARCA: "Epson"
+    const inventoryTableBody = document.getElementById('inventoryTableBody');
+
+    // Hacer una solicitud GET a la API para obtener los productos deshabilitados
+    fetch('https://healtyapi.bsite.net/api/product_units') // API que devuelve todos los productos
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la solicitud: ' + response.statusText);
+            }
+            return response.json();  // Convertir la respuesta en formato JSON
+        })
+        .then(data => {
+            console.log("Datos obtenidos de la API:", data);  // Depuración: mostrar los datos
+            if (Array.isArray(data)) {
+                // Filtrar solo los que tienen status "deshabilitado"
+                const deshabilitados = data.filter(item => 
+                    item.Status && item.Status.toLowerCase() === 'deshabilitado'
+                );
+
+                // Ordenar los productos por id_product
+                deshabilitados.sort((a, b) => {
+                    return a.ProductInfo.id_product - b.ProductInfo.id_product;
+                });
+
+                renderTable(deshabilitados);  // Pasar los datos filtrados a la función que renderiza la tabla
+            } else {
+                console.error("La respuesta no es un array", data);
+            }
+        })
+        .catch(error => {
+            console.error("Error al obtener los datos:", error);  // Depuración: manejar el error
+        });
+
+    function createAttributeDiv(label, value) {
+        if (!value || value.trim() === '') value = 'No tiene';
+        return `<div><strong>${label}:</strong> <span>${value}</span></div>`;
     }
-  ];
 
-  const tableBody = document.getElementById('inventoryTableBody');
+    function renderTable(data) {
+        inventoryTableBody.innerHTML = ''; // Limpiar filas existentes
 
-  const normalizeText = (text) =>
-    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  function createAttributeDiv(label, value) {
-    if (!value || value.trim() === '') value = 'No tiene';
-    return `<div><strong>${label}:</strong> <span>${value}</span></div>`;
-  }
-
-  function renderTable(data) {
-    tableBody.innerHTML = '';
-
-    data.forEach(item => {
-      const row = document.createElement('tr');
-      row.classList.add('item-row');
-      row.setAttribute('data-id', item.ID);
-
-      const statusClass = item.STATUS.toLowerCase() === 'buena' ? 'status-good' : 'status-bad';
-      const checkClass = item.CHECK.toLowerCase() === 'si' ? 'status-good' : 'status-pending';
-
-      row.innerHTML = `
-        <td><input type="checkbox" class="checkbox-select" /></td>
-        <td class="col-id">${item.ID}</td>
-        <td class="col-articulo">${item.ARTICULO}</td>
-        <td>${item.MODELO}</td>
-        <td>${item.EDIFICIO}</td>
-        <td>${item.AREA}</td>
-        <td><span class="badge-status ${statusClass}">${item.STATUS}</span></td>
-        <td><span class="badge-status ${checkClass}">${item.CHECK}</span></td>
-      `;
-
-      tableBody.appendChild(row);
-
-      const expandableRow = document.createElement('tr');
-      expandableRow.classList.add('expandable-row');
-      expandableRow.style.display = 'none';
-      expandableRow.innerHTML = `
-        <td colspan="8">
-          <div class="expandable-content">
-            <div class="expandable-attributes">
-              ${createAttributeDiv('Etiquetado', item.LABEL)}
-              ${createAttributeDiv('Tipo', item.TIPO)}
-              ${createAttributeDiv('Marca', item.MARCA)}
-              ${createAttributeDiv('Resguardante', item.RESGUARDANTE)}
-            </div>
-            <div class="expandable-observations">
-              ${createAttributeDiv('Observaciones', item.OBSERVACIONES)}
-            </div>
-          </div>
-        </td>
-      `;
-      tableBody.appendChild(expandableRow);
-
-      row.addEventListener('click', (e) => {
-        if (e.target.type !== 'checkbox') {
-          expandableRow.style.display = expandableRow.style.display === 'none' ? 'table-row' : 'none';
+        if (data.length === 0) {
+            console.log("No hay datos para mostrar.");
         }
-      });
-    });
-  }
 
-  function searchTable() {
-    const input = document.getElementById("busquedaInput");
-    const filtro = normalizeText(input.value.trim());
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.classList.add('item-row');
+            row.setAttribute('data-id', item.id_unit);
 
-    document.querySelectorAll('#inventoryTableBody tr').forEach((row, index, rows) => {
-      if (row.classList.contains('expandable-row')) return;
+            // Asignamos las clases de estado
+            const statusLower = item.Status.toLowerCase();
+            const statusClass = statusLower === 'activo' ? 'status-good' : 'status-pending';
+            const checkLower = item.PendingStatus.toLowerCase();
+            const checkClass = checkLower === 'pendiente' ? 'status-pending' : 'status-good';
 
-      const id = normalizeText(row.querySelector('.col-id')?.textContent || "");
-      const articulo = normalizeText(row.querySelector('.col-articulo')?.textContent || "");
-      const visible = id.includes(filtro) || articulo.includes(filtro);
+            row.innerHTML = `
+                <td><input type="checkbox" class="checkbox-select"></td>
+                <td class="col-id">${item.id_unit}</td>
+                <td class="col-articulo">${item.ProductInfo.name}</td>
+                <td>${item.ProductInfo.model}</td>
+                <td>${item.LocationInfo.location_name}</td>
+                <td>${item.LabInfo.lab_name}</td>
+                <td><span class="badge-status ${statusClass}">${item.Status}</span></td>
+                <td><span class="badge-status ${checkClass}">${item.PendingStatus}</span></td>
+                <td><button class="btn btn-success reactivateBtn" data-id="${item.id_unit}">Reactivar</button></td>
+            `;
 
-      row.style.display = visible ? '' : 'none';
+            inventoryTableBody.appendChild(row);
 
-      const nextRow = rows[index + 1];
-      if (nextRow && nextRow.classList.contains('expandable-row')) {
-        nextRow.style.display = visible ? nextRow.style.display : 'none';
-      }
-    });
-  }
+            // Fila expandible con más detalles
+            const expandableRow = document.createElement('tr');
+            expandableRow.classList.add('expandable-row');
+            expandableRow.style.display = 'none';
+            expandableRow.innerHTML = `
+                <td colspan="9">
+                    <div class="expandable-content">
+                      <div class="expandable-attributes">
+                        ${createAttributeDiv('Etiquetado', item.LabelStatus)}
+                        ${createAttributeDiv('Tipo', item.ProductInfo.Category)}
+                        ${createAttributeDiv('Resguardante', item.GuardianInfo.name)}
+                        ${createAttributeDiv('Email', item.GuardianInfo.email)}
+                      </div>
+                    </div>
+                </td>
+            `;
+            inventoryTableBody.appendChild(expandableRow);
 
-  function limpiarBusqueda() {
-    const input = document.getElementById('busquedaInput');
-    input.value = "";
-    input.dispatchEvent(new Event('input'));
-  }
+            // Evento para desplegar/colapsar fila expandible al hacer clic en la fila
+            row.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') { // Asegurarse de que no sea la casilla de verificación
+                    expandableRow.style.display = expandableRow.style.display === 'none' ? 'table-row' : 'none';
+                }
+            });
 
-  function applyFilters() {
-    const etiquetado = document.getElementById('filterEtiquetado').value;
-    const status = document.getElementById('filterStatus').value;
-    const tipo = document.getElementById('filterTipo').value;
-    const edificio = document.getElementById('filterEdificio').value;
-    const area = document.getElementById('filterArea').value;
-
-    const filtered = eliminados.filter(item => {
-      return (
-        (etiquetado === 'Etiquetado' || item.LABEL.toLowerCase() === etiquetado.toLowerCase()) &&
-        (status === 'Status' || item.STATUS.toLowerCase() === (status === 'bueno' ? 'buena' : 'dañada')) &&
-        (tipo === 'Tipo' || item.TIPO.toLowerCase() === tipo.toLowerCase()) &&
-        (edificio === 'Edificio' || item.EDIFICIO.toLowerCase() === edificio.toLowerCase()) &&
-        (area === 'Área' || normalizeText(item.AREA) === normalizeText(area))
-      );
-    });
-
-    renderTable(filtered);
-
-    const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
-    modal.hide();
-  }
-
-  function eliminarSeleccionados() {
-    const checkboxes = document.querySelectorAll('#inventoryTableBody input[type="checkbox"]:checked');
-
-    if (checkboxes.length === 0) {
-      alert("Selecciona al menos un producto para eliminar.");
-      return;
+            // Evento para reactivar el producto
+            const reactivateBtn = row.querySelector('.reactivateBtn');
+            reactivateBtn.addEventListener('click', (e) => {
+                const productId = e.target.getAttribute('data-id');
+                reactivarProducto(productId);
+            });
+        });
     }
 
-    checkboxes.forEach(checkbox => {
-      const row = checkbox.closest('tr');
-      const id = parseInt(row.getAttribute('data-id'));
-      const index = eliminados.findIndex(item => item.ID === id);
+    // Función para reactivar un producto
+    async function reactivarProducto(id) {
+        try {
+            const response = await fetch(`https://healtyapi.bsite.net/api/product_units/enable/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
 
-      if (index !== -1) {
-        eliminados.splice(index, 1);
-      }
-    });
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Éxito',
+                    text: `El producto con ID ${id} ha sido reactivado.`,
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar'
+                });
 
-    renderTable(eliminados);
-  }
+                // Actualizar la tabla eliminando el producto reactivado
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    row.remove(); // Eliminar la fila de la tabla
+                }
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un problema al reactivar el producto. Intenta nuevamente.',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+            }
+        } catch (error) {
+            console.error('Error al reactivar el producto:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Hubo un problema al conectarse con la API. Intenta nuevamente.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        }
+    }
 
-  // EVENTOS
-  document.getElementById('busquedaInput').addEventListener('input', searchTable);
-  document.getElementById('applyFilters').addEventListener('click', applyFilters);
-  document.getElementById('filterForm').addEventListener('reset', () => renderTable(eliminados));
-  document.querySelector('button.btn.btn-secondary').addEventListener('click', eliminarSeleccionados);
+    // Búsqueda de la tabla
+    document.getElementById('searchInput').addEventListener('keyup', searchTable);
 
-  // INICIAL
-  renderTable(eliminados);
+    function searchTable() {
+        let input = document.getElementById('searchInput');
+        let filter = input.value.toUpperCase();
+        let filteredData = inventoryData.filter(item => item.ID.toString().includes(filter));
+        renderTable(filteredData);
+    }
 });

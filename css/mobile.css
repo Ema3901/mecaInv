@@ -1,0 +1,87 @@
+/* Estilos generales */
+body {
+  background-color: #f0f4f8; /* Gris claro */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.container {
+  max-width: 100%;
+  padding: 15px;
+}
+
+h1 {
+  color: #333;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+p {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.lead {
+  font-size: 1.25rem;
+  color: #555;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+/* Estilos del botón de descarga */
+.btn {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.btn-success {
+  background-color: #6c757d; /* Gris oscuro */
+  border-color: #5a636a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #5a636a;
+  border-color: #4a5156;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+small {
+  color: #777;
+}
+
+/* Imagen del logo */
+img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+/* Mejoras responsivas */
+@media (max-width: 576px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .btn {
+    width: 100%;
+    font-size: 1rem;
+    padding: 12px 20px;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+  }
+}

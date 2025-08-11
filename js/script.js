@@ -1,150 +1,35 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    const inventoryData = [
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261384,
-            ARTICULO: "Silla plegable",
-            MARCA: "Office Depot",
-            MODELO: "CS-1128-B",
-            OBSERVACIONES: "Negro, tela/metal, 75cm x 48.5cm x 46cm, respaldo medio / mecanismo tubular de acero / soporte trasero de carga / reposa pies",
-            AREA: "Dirección",
-            RESGUARDANTE: "ING. DIEGO CRUZ ORTEGA",
-            EDIFICIO: "A",
-            TIPO: "Cons"
-        },
-        {
-            CHECK: "NO",
-            STATUS: "DAÑADA",
-            LABEL: "SI",
-            ID: 261385,
-            ARTICULO: "Escritorio ejecutivo",
-            MARCA: "Ofitech",
-            MODELO: "EX-450",
-            OBSERVACIONES: "Madera maciza, color nogal, con cajones laterales y superficie de vidrio",
-            AREA: "Oficina Principal",
-            RESGUARDANTE: "LIC. MARÍA PÉREZ",
-            EDIFICIO: "B",
-            TIPO: "Cont"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261386,
-            ARTICULO: "Computadora de escritorio",
-            MARCA: "Dell",
-            MODELO: "OptiPlex 7080",
-            OBSERVACIONES: "Procesador i7, 16GB RAM, 512GB SSD, monitor 24 pulgadas",
-            AREA: "Departamento IT",
-            RESGUARDANTE: "ING. JUAN GARCÍA",
-            EDIFICIO: "C",
-            TIPO: "Cont"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261387,
-            ARTICULO: "Proyector multimedia",
-            MARCA: "Epson",
-            MODELO: "EB-X41",
-            OBSERVACIONES: "Resolución XGA, brillo 3600 lúmenes, conectividad HDMI y VGA",
-            AREA: "Sala de juntas",
-            RESGUARDANTE: "LIC. ANA LÓPEZ",
-            EDIFICIO: "A",
-            TIPO: "Cons"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "SI",
-            ID: 261388,
-            ARTICULO: "Silla ergonómica",
-            MARCA: "Herman Miller",
-            MODELO: "Aeron",
-            OBSERVACIONES: "Con soporte lumbar, ajuste de altura y reposabrazos",
-            AREA: "Departamento Diseño",
-            RESGUARDANTE: "ING. CARLOS MENDOZA",
-            EDIFICIO: "B",
-            TIPO: "Cont"
-        },
-        {
-            CHECK: "NO",
-            STATUS: "DAÑADA",
-            LABEL: "SI",
-            ID: 261389,
-            ARTICULO: "Impresora láser",
-            MARCA: "HP",
-            MODELO: "LaserJet Pro M404n",
-            OBSERVACIONES: "Impresión monocromática, conexión por USB y red",
-            AREA: "Área de impresión",
-            RESGUARDANTE: "LIC. MARÍA HERNÁNDEZ",
-            EDIFICIO: "C",
-            TIPO: "Cons"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261390,
-            ARTICULO: "Mesa de reuniones",
-            MARCA: "Ikea",
-            MODELO: "BEKANT",
-            OBSERVACIONES: "No tiene",
-            AREA: "Sala de juntas",
-            RESGUARDANTE: "ING. MIGUEL SÁNCHEZ",
-            EDIFICIO: "A",
-            TIPO: "Cont"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261391,
-            ARTICULO: "Lámpara de escritorio",
-            MARCA: "Philips",
-            MODELO: "Hue White",
-            OBSERVACIONES: "Con control remoto y brillo ajustable",
-            AREA: "Departamento IT",
-            RESGUARDANTE: "ING. JUAN GARCÍA",
-            EDIFICIO: "C",
-            TIPO: "Cons"
-        },
-        {
-            CHECK: "NO",
-            STATUS: "DAÑADA",
-            LABEL: "SI",
-            ID: 261392,
-            ARTICULO: "Cafetera eléctrica",
-            MARCA: "Nespresso",
-            MODELO: "Essenza Mini",
-            OBSERVACIONES: "Capacidad para 1-2 tazas, color negro",
-            AREA: "Cafetería",
-            RESGUARDANTE: "LIC. ANA LÓPEZ",
-            EDIFICIO: "B",
-            TIPO: "Cons"
-        },
-        {
-            CHECK: "SI",
-            STATUS: "BUENA",
-            LABEL: "NO",
-            ID: 261393,
-            ARTICULO: "Router inalámbrico",
-            MARCA: "TP-Link",
-            MODELO: "Archer C7",
-            OBSERVACIONES: "Dual band, 3 antenas externas",
-            AREA: "Departamento IT",
-            RESGUARDANTE: "ING. JUAN GARCÍA",
-            EDIFICIO: "C",
-            TIPO: "Cont"
-        }
-    ];
-
     const inventoryTableBody = document.getElementById('inventoryTableBody');
+
+    // Hacer una solicitud GET a la API
+    fetch('https://healtyapi.bsite.net/api/product_units')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la solicitud: ' + response.statusText);
+            }
+            return response.json();  // Convertir la respuesta en formato JSON
+        })
+        .then(data => {
+            console.log("Datos obtenidos de la API:", data);  // Depuración: mostrar los datos
+            if (Array.isArray(data)) {
+                // Filtrar solo los que tienen status "activo"
+                const activos = data.filter(item => 
+                    item.Status && item.Status.toLowerCase() === 'activo'
+                );
+
+                // Ordenar los productos por id_product
+                activos.sort((a, b) => {
+                    return a.ProductInfo.id_product - b.ProductInfo.id_product;
+                });
+
+                renderTable(activos);  // Pasar los datos filtrados a la función que renderiza la tabla
+            } else {
+                console.error("La respuesta no es un array", data);
+            }
+        })
+        .catch(error => {
+            console.error("Error al obtener los datos:", error);  // Depuración: manejar el error
+        });
 
     function createAttributeDiv(label, value) {
         if (!value || value.trim() === '') value = 'No tiene';
@@ -154,29 +39,35 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTable(data) {
         inventoryTableBody.innerHTML = ''; // Limpiar filas existentes
 
+        if (data.length === 0) {
+            console.log("No hay datos para mostrar.");
+        }
+
         data.forEach(item => {
             const row = document.createElement('tr');
             row.classList.add('item-row');
-            row.setAttribute('data-id', item.ID);
+            row.setAttribute('data-id', item.id_unit);
 
-            const statusLower = item.STATUS.toLowerCase();
-            const statusClass = statusLower === 'buena' ? 'status-good' : (statusLower === 'dañado' || statusLower === 'dañada' ? 'status-bad' : 'status-pending');
-            const checkLower = item.CHECK.toLowerCase();
-            const checkClass = checkLower === 'si' || checkLower === 'completed' ? 'status-good' : 'status-pending';
+            // Asignamos las clases de estado
+            const statusLower = item.Status.toLowerCase();
+            const statusClass = statusLower === 'activo' ? 'status-good' : 'status-pending';
+            const checkLower = item.PendingStatus.toLowerCase();
+            const checkClass = checkLower === 'pendiente' ? 'status-pending' : 'status-good';
 
             row.innerHTML = `
                 <td><input type="checkbox" class="checkbox-select"></td>
-                <td class="col-id">${item.ID}</td>
-                <td class="col-articulo">${item.ARTICULO}</td>
-                <td>${item.MODELO}</td>
-                <td>${item.EDIFICIO}</td>
-                <td>${item.AREA}</td>
-                <td><span class="badge-status ${statusClass}">${item.STATUS}</span></td>
-                <td><span class="badge-status ${checkClass}">${item.CHECK}</span></td>
+                <td class="col-id">${item.id_unit}</td>
+                <td class="col-articulo">${item.ProductInfo.name}</td>
+                <td>${item.ProductInfo.model}</td>
+                <td>${item.LocationInfo.location_name}</td>
+                <td>${item.LabInfo.lab_name}</td>
+                <td><span class="badge-status ${statusClass}">${item.Status}</span></td>
+                <td><span class="badge-status ${checkClass}">${item.PendingStatus}</span></td>
             `;
 
             inventoryTableBody.appendChild(row);
 
+            // Fila expandible con más detalles
             const expandableRow = document.createElement('tr');
             expandableRow.classList.add('expandable-row');
             expandableRow.style.display = 'none';
@@ -184,13 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td colspan="8">
                     <div class="expandable-content">
                       <div class="expandable-attributes">
-                        ${createAttributeDiv('Etiquetado', item.LABEL)}
-                        ${createAttributeDiv('Tipo', item.TIPO)}
-                        ${createAttributeDiv('Marca', item.MARCA)}
-                        ${createAttributeDiv('Resguardante', item.RESGUARDANTE)}
-                      </div>
-                      <div class="expandable-observations">
-                        ${createAttributeDiv('Observaciones', item.OBSERVACIONES)}
+                        ${createAttributeDiv('Etiquetado', item.LabelStatus)}
+                        ${createAttributeDiv('Tipo', item.ProductInfo.Category)}
+                        ${createAttributeDiv('Resguardante', item.GuardianInfo.name)}
+                        ${createAttributeDiv('Email', item.GuardianInfo.email)}
                       </div>
                     </div>
                 </td>
@@ -206,62 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Búsqueda de la tabla
+    document.getElementById('searchInput').addEventListener('keyup', searchTable);
+
     function searchTable() {
-        let input = document.getElementById('busquedaInput');
+        let input = document.getElementById('searchInput');
         let filter = input.value.toUpperCase();
         let filteredData = inventoryData.filter(item => item.ID.toString().includes(filter));
         renderTable(filteredData);
     }
-
-    function sortTable(columnIndex) {
-        const sortedData = [...inventoryData];
-        sortedData.sort((a, b) => {
-            const valA = a[Object.keys(a)[columnIndex]];
-            const valB = b[Object.keys(b)[columnIndex]];
-
-            if (typeof valA === 'string') {
-                return valA.localeCompare(valB);
-            } else {
-                return valA - valB;
-            }
-        });
-
-        renderTable(sortedData);
-    }
-
-    document.getElementById('applyFilters').addEventListener('click', () => {
-    const etiquetado = document.getElementById('filterEtiquetado').value;
-    const status = document.getElementById('filterStatus').value;
-    const tipo = document.getElementById('filterTipo').value;
-    const edificio = document.getElementById('filterEdificio').value;
-    const area = document.getElementById('filterArea').value;
-
-    const filteredData = inventoryData.filter(item => {
-        return (
-            (etiquetado === 'Etiquetado' || item.LABEL.toLowerCase() === etiquetado.toLowerCase()) &&
-            (status === 'Status' || item.STATUS.toLowerCase() === (status === 'bueno' ? 'buena' : 'dañada')) &&
-            (tipo === 'Tipo' || item.TIPO.toLowerCase() === tipo.toLowerCase()) &&
-            (edificio === 'Edificio' || item.EDIFICIO.toLowerCase() === edificio.toLowerCase()) &&
-            (area === 'Área' || normalizeText(item.AREA) === normalizeText(area))
-        );
-    });
-
-    renderTable(filteredData);
-
-    const filterModal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
-    filterModal.hide();
-});
-
-document.querySelector('[onclick="resetFilters()"]').addEventListener('click', () => {
-  document.getElementById('filterForm').reset();
-  renderTable(inventoryData); // Recarga la tabla con todo
-});
-
-
-
-    // Inicializar la tabla con los datos
-    renderTable(inventoryData);
-
-    // Agregar evento de búsqueda
-    document.getElementById('searchInput').addEventListener('keyup', searchTable);
 });

@@ -1,8 +1,8 @@
 <?php
-// Incluir archivo de conexión a la base de datos
-include('db.php'); 
+// Incluir el archivo de conexión a la base de datos
+include('../db.php'); // Asegúrate de que el archivo db.php esté correctamente incluido, usando '../' para subir un nivel de carpeta.
 
-// Realizar consulta para obtener productos con los nombres de categoría y marca
+// Realizar la consulta para obtener los productos del inventario con los nombres de la categoría y la marca
 $sql = "
     SELECT 
         inventory.id_p, 
@@ -25,14 +25,12 @@ $result = $conn->query($sql);
 
 // Verificar si hay resultados
 if ($result->num_rows > 0) {
-    // Obtener todos los productos
     $products = $result->fetch_all(MYSQLI_ASSOC);
 } else {
-    // Si no hay productos, creamos un array vacío
     $products = [];
 }
 
-// Cerrar conexión
+// Cerrar la conexión
 $conn->close();
 ?>
 
@@ -55,26 +53,23 @@ $conn->close();
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="index.html" class="active"><i class="fas fa-cubes"></i> Inventario</a></li> <!-- Ruta ajustada -->
-          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li> <!-- Ruta ajustada -->
-          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li> <!-- Ruta ajustada -->
-          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li> <!-- Ruta ajustada -->
-          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li> <!-- Ruta ajustada -->
+          <li><a href="../index.html" class="active"><i class="fas fa-cubes"></i> Inventario</a></li> <!-- Ruta ajustada -->
+          <li><a href="../deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li> <!-- Ruta ajustada -->
+          <li><a href="../pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li> <!-- Ruta ajustada -->
+          <li><a href="../historial.html"><i class="fas fa-history"></i> Historial</a></li> <!-- Ruta ajustada -->
+          <li><a href="../productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li> <!-- Ruta ajustada -->
         </ul>
       </nav>
     </aside>
     <main class="main-content">
       <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
         <h1>Inventario</h1>
-        <a href="add_product.php" class="btn btn-success">Agregar Producto</a>
-
-
         <div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
           <img src="../img/stock.jpg" alt="User Avatar" id="profileDropdown" /> <!-- Ruta ajustada -->
           <span>Ann Lee</span>
           <i class="fas fa-chevron-down ml-2"></i>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-            <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">Cerrar sesión</a></li> <!-- Ruta ajustada -->
+            <li><a class="dropdown-item" href="../login.html" onclick="handleLogout()">Cerrar sesión</a></li> <!-- Ruta ajustada -->
           </ul>
         </div>
       </header>
@@ -106,7 +101,7 @@ $conn->close();
             <button class="btn btn-success" onclick="solicitarPrestamo()">
               <i class="fas fa-user-plus"></i> Solicitar préstamo
             </button>
-            <button class="btn btn-primary" onclick="window.location.href='additem.html'">
+            <button class="btn btn-primary" onclick="window.location.href='../additem.html'">
               <i class="fas fa-plus"></i> Nuevos Productos
             </button>
           </div>
