@@ -98,41 +98,13 @@ function showMessage(msg, type = 'info') {
   messagesContainer.appendChild(div);
 }
 
-// Variables para valores automáticos
-let defaultPendienteId = null;
-let defaultEstadoId = null;
-
 // Inicializar selects del paso 1
 document.addEventListener('DOMContentLoaded', async () => {
   await fillSelect(document.getElementById('categoria'), selectors.categoria);
   await fillSelect(document.getElementById('marca'), selectors.marca);
+  await fillSelect(document.getElementById('pendiente'), selectors.pendiente);
   await fillSelect(document.getElementById('condicion'), selectors.condicion);
-  
-  // Cargar pendientes para obtener ID de "realizado"
-  try {
-    const pendientesData = await fetchJSON(selectors.pendiente.url);
-    const realizadoItem = pendientesData.find(item => 
-      item[selectors.pendiente.name].toLowerCase().includes('realizado')
-    );
-    if (realizadoItem) {
-      defaultPendienteId = realizadoItem[selectors.pendiente.id];
-    }
-  } catch (e) {
-    console.error('Error cargando pendientes:', e);
-  }
-  
-  // Cargar estados para obtener ID de "activo"
-  try {
-    const estadosData = await fetchJSON(selectors.estado.url);
-    const activoItem = estadosData.find(item => 
-      item[selectors.estado.name].toLowerCase().includes('activo')
-    );
-    if (activoItem) {
-      defaultEstadoId = activoItem[selectors.estado.id];
-    }
-  } catch (e) {
-    console.error('Error cargando estados:', e);
-  }
+  await fillSelect(document.getElementById('estado'), selectors.estado);
 });
 
 // Ir a paso 2
@@ -150,16 +122,12 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
   const marca = document.getElementById('marca').value;
   const especificaciones = document.getElementById('especificaciones').value.trim();
   const unidades = parseInt(document.getElementById('unidades').value, 10);
+  const pendiente = document.getElementById('pendiente').value;
   const condicion = document.getElementById('condicion').value;
+  const estado = document.getElementById('estado').value;
 
-  if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !condicion) {
+  if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
     showMessage('Todos los campos del producto son obligatorios y unidades al menos 1.', 'error');
-    return;
-  }
-
-  // Verificar que tengamos los IDs por defecto
-  if (!defaultPendienteId || !defaultEstadoId) {
-    showMessage('Error: No se pudieron cargar los valores por defecto de Pendiente y Estado.', 'error');
     return;
   }
 
@@ -231,7 +199,7 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
             </div>
           </div>
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="form-group mb-3">
                 <label class="form-label">Laboratorio <span class="required">*</span></label>
                 <select class="form-select lab-select" name="laboratorio_${i}" required>
@@ -239,7 +207,15 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
                 </select>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+              <div class="form-group mb-3">
+                <label class="form-label">Pendiente <span class="required">*</span></label>
+                <select class="form-select pending-select" name="pendiente_${i}" required>
+                  <option value="">Cargando...</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
               <div class="form-group mb-3">
                 <label class="form-label">Condición <span class="required">*</span></label>
                 <select class="form-select status-select" name="condicion_${i}" required>
@@ -247,8 +223,13 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
                 </select>
               </div>
             </div>
-            <div class="col-md-4">
-              <!-- Espaciador - Pendiente y Estado se asignan automáticamente -->
+            <div class="col-md-3">
+              <div class="form-group mb-3">
+                <label class="form-label">Estado <span class="required">*</span></label>
+                <select class="form-select disabled-select" name="estado_${i}" required>
+                  <option value="">Cargando...</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -269,8 +250,14 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
     const labSelects = container.querySelectorAll('.lab-select');
     for (const sel of labSelects) await fillSelect(sel, selectors.laboratorio);
     
+    const pendingSelects = container.querySelectorAll('.pending-select');
+    for (const sel of pendingSelects) await fillSelect(sel, selectors.pendiente);
+    
     const statusSelects = container.querySelectorAll('.status-select');
     for (const sel of statusSelects) await fillSelect(sel, selectors.condicion);
+    
+    const disabledSelects = container.querySelectorAll('.disabled-select');
+    for (const sel of disabledSelects) await fillSelect(sel, selectors.estado);
 
     // Mostrar paso 2 y ocultar paso1
     document.getElementById('step1').classList.add('d-none');
@@ -321,10 +308,12 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
     const unidades = parseInt(document.getElementById('unidades').value, 10);
     const fotoInput = document.getElementById('foto');
     const fotoNombre = fotoInput.files[0] ? fotoInput.files[0].name : '';
+    const pendiente = document.getElementById('pendiente').value;
     const condicion = document.getElementById('condicion').value;
+    const estado = document.getElementById('estado').value;
 
     // Validación básica
-    if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !condicion) {
+    if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
       showMessage('Faltan datos obligatorios del producto.', 'error');
       return;
     }
@@ -378,9 +367,11 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
       const area = unitsContainer.querySelector(`[name=area_${i}]`).value;
       const ubicacion = unitsContainer.querySelector(`[name=ubicacion_${i}]`).value;
       const laboratorio = unitsContainer.querySelector(`[name=laboratorio_${i}]`).value;
+      const pending = unitsContainer.querySelector(`[name=pendiente_${i}]`).value;
       const status = unitsContainer.querySelector(`[name=condicion_${i}]`).value;
+      const disabled = unitsContainer.querySelector(`[name=estado_${i}]`).value;
 
-      if (!serial || !codigo || !resguardante || !area || !ubicacion || !laboratorio || !status) {
+      if (!serial || !codigo || !resguardante || !area || !ubicacion || !laboratorio || !disabled || !pending || !status) {
         showMessage(`Unidad ${i}: faltan campos obligatorios, se omite.`, 'error');
         errorCount++;
         continue;
@@ -392,8 +383,8 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
         internal_code: codigo,
         observations: observacion,
         notes: anotacion,
-        fk_disabled: defaultEstadoId, // Automáticamente "activo"
-        fk_pending: defaultPendienteId, // Automáticamente "realizado"
+        fk_disabled: parseInt(disabled, 10), 
+        fk_pending: parseInt(pending, 10),
         fk_laboratory: parseInt(laboratorio, 10),
         fk_location: parseInt(ubicacion, 10),
         fk_guardian: parseInt(resguardante, 10),
