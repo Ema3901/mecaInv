@@ -3,53 +3,231 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Historial de Acciones</title>
+  <title>Historial - Inventario Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
   <link href="css/style.css" rel="stylesheet" />
+  <link href="css/index.css" rel="stylesheet" />
+  <link href="css/filter.css" rel="stylesheet" />
   <style>
-    .badge-action {
-      font-size: 0.85rem;
+    .history-card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .history-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+      border-radius: 10px 10px 0 0;
+    }
+    
+    .history-action {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .history-action i {
+      font-size: 1.2rem;
+    }
+    
+    .history-details {
+      padding: 1rem;
+    }
+    
+    .history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+    
+    .meta-label {
+      font-size: 0.8rem;
+      color: #6c757d;
       font-weight: 600;
-      padding: 0.35em 0.75em;
-      border-radius: 999px;
-      color: white;
-      display: inline-block;
+      text-transform: uppercase;
     }
-    .action-aprobo {
-      background-color: var(--status-good, #28a745);
+    
+    .meta-value {
+      font-weight: 500;
+      color: #495057;
     }
-    .action-elimino {
-      background-color: var(--status-bad, #dc3545);
+    
+    .changes-list {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
     }
-    .action-edito {
-      background-color: var(--status-pending, #ffc107);
-      color: #212529;
+    
+    .change-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .change-item:last-child {
+      border-bottom: none;
+    }
+    
+    .change-old {
+      color: #dc3545;
+      text-decoration: line-through;
+    }
+    
+    .change-new {
+      color: #28a745;
+      font-weight: 500;
+    }
+    
+    .timeline-connector {
+      position: relative;
+      margin-left: 2rem;
+    }
+    
+    .timeline-connector::before {
+      content: '';
+      position: absolute;
+      left: -1rem;
+      top: 0;
+      bottom: -1rem;
+      width: 2px;
+      background: #dee2e6;
+    }
+    
+    .timeline-connector:last-child::before {
+      display: none;
+    }
+    
+    .history-filters {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .filter-row {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6c757d;
+    }
+    
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .loading-skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 5px;
+      height: 20px;
+      margin: 5px 0;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .bulk-indicator {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
   <div class="dashboard-container">
     <aside class="sidebar">
-      <div class="sidebar-header">
+      <div class="sidebar-header" title="Menú">
         Inventario
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="index.html"><i class="fas fa-cubes"></i> Inventario</a></li>
+          <li><a href="index.html" class="active"><i class="fas fa-cubes"></i> Inventario</a></li>
           <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
           <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
-          <li><a href="historial.html" class="active"><i class="fas fa-history"></i> Historial</a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
           <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+          
+          <li><a href="excel.html"><i class="fas fa-history"></i> Descargar tablas</a></li>
+          <li><a href="dashboard.html"><i class="fas fa-shield-alt"></i> Panel administrativo</a></li>
         </ul>
       </nav>
     </aside>
-
+    
     <main class="main-content">
       <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
-        <h1>Historial de acciones</h1>
+        <h1>Historial de Actividades</h1>
         <div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="img/stock.jpg" alt="User Avatar" id="profileDropdown"/>
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #6c757d; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+            AL
+          </div>
           <span>Ann Lee</span>
           <i class="fas fa-chevron-down ml-2"></i>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
@@ -60,50 +238,1030 @@
 
       <div class="divider"></div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha y hora</th>
-              <th>Acción realizada</th>
-              <th>ID Producto</th>
-              <th>Usuario</th>
-            </tr>
-          </thead>
-          <tbody id="historialBody">
-            <!-- JS simula  acciones -->
-          </tbody>
-        </table>
+      <!-- Estadísticas rápidas -->
+      <div class="stats-cards" id="statsCards">
+        <!-- Se llenarán dinámicamente -->
+      </div>
+
+      <!-- Filtros de historial -->
+      <div class="history-filters">
+        <h5><i class="fas fa-filter me-2"></i>Filtros de Historial</h5>
+        <div class="filter-row mt-3">
+          <div class="filter-group">
+            <label for="filterActionType" class="form-label">Tipo de Acción</label>
+            <select class="form-select" id="filterActionType">
+              <option value="">Todas las acciones</option>
+              <option value="PRODUCT_CREATED">Productos creados</option>
+              <option value="PRODUCT_UPDATED">Productos actualizados</option>
+              <option value="PRODUCT_DEACTIVATED">Productos desactivados</option>
+              <option value="PRODUCT_REACTIVATED">Productos reactivados</option>
+              <option value="LOAN_REQUESTED">Préstamos solicitados</option>
+              <option value="LOAN_RETURNED">Préstamos devueltos</option>
+              <option value="STATUS_CHANGED">Cambios de estado</option>
+              <option value="LOCATION_CHANGED">Cambios de ubicación</option>
+              <option value="CHECK_PERFORMED">Revisiones realizadas</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterUser" class="form-label">Usuario</label>
+            <select class="form-select" id="filterUser">
+              <option value="">Todos los usuarios</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterDateFrom" class="form-label">Fecha desde</label>
+            <input type="date" class="form-control" id="filterDateFrom">
+          </div>
+          <div class="filter-group">
+            <label for="filterDateTo" class="form-label">Fecha hasta</label>
+            <input type="date" class="form-control" id="filterDateTo">
+          </div>
+          <div class="filter-group">
+            <label for="filterUnitId" class="form-label">ID de Producto</label>
+            <input type="text" class="form-control" id="filterUnitId" placeholder="Buscar por ID">
+          </div>
+          <div class="filter-group">
+            <button class="btn btn-primary" onclick="applyHistoryFilters()">
+              <i class="fas fa-search me-1"></i>Filtrar
+            </button>
+            <button class="btn btn-secondary ms-2" onclick="resetHistoryFilters()">
+              <i class="fas fa-sync-alt me-1"></i>Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor de historial -->
+      <div id="historyContainer">
+        <!-- Loading skeleton -->
+        <div id="loadingSkeleton">
+          <div class="history-card">
+            <div class="history-header">
+              <div class="loading-skeleton" style="width: 200px;"></div>
+              <div class="loading-skeleton" style="width: 150px;"></div>
+            </div>
+            <div class="history-details">
+              <div class="loading-skeleton" style="width: 100%;"></div>
+              <div class="loading-skeleton" style="width: 80%;"></div>
+              <div class="loading-skeleton" style="width: 60%;"></div>
+            </div>
+          </div>
+          <div class="history-card">
+            <div class="history-header">
+              <div class="loading-skeleton" style="width: 180px;"></div>
+              <div class="loading-skeleton" style="width: 120px;"></div>
+            </div>
+            <div class="history-details">
+              <div class="loading-skeleton" style="width: 100%;"></div>
+              <div class="loading-skeleton" style="width: 70%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estados vacíos -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <i class="fas fa-history"></i>
+        <h3>No hay actividades registradas</h3>
+        <p>Las actividades realizadas en el inventario aparecerán aquí</p>
+      </div>
+
+      <div id="noResultsState" class="empty-state" style="display: none;">
+        <i class="fas fa-search"></i>
+        <h3>No se encontraron resultados</h3>
+        <p>Intenta ajustar los filtros de búsqueda</p>
+      </div>
+
+      <!-- Mensaje de error -->
+      <div id="errorState" class="error-message" style="display: none;">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>Error al cargar historial</h5>
+        <p id="errorMessage">Ha ocurrido un error al cargar los datos del historial.</p>
+        <button class="btn btn-outline-danger btn-sm" onclick="retryLoadHistory()">
+          <i class="fas fa-retry me-1"></i>Reintentar
+        </button>
       </div>
     </main>
   </div>
 
-  <script>
-    const historial = [
-      { fecha: "2025-06-10 23:15", accion: "Aprobó revisión", tipo: "aprobo", producto: 261385, usuario: "Ann Lee" },
-      { fecha: "2025-06-10 23:05", accion: "Eliminó producto", tipo: "elimino", producto: 261389, usuario: "Ann Lee" },
-      { fecha: "2025-06-10 22:55", accion: "Editó observaciones", tipo: "edito", producto: 261386, usuario: "Ann Lee" }
-    ];
+  <!-- Modal para detalles de historial -->
+  <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="historyDetailModalLabel">
+            <i class="fas fa-info-circle me-2"></i>Detalles de la Actividad
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="historyDetailContent">
+          <!-- Contenido dinámico -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    const tbody = document.getElementById("historialBody");
-
-    historial.forEach(registro => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${registro.fecha}</td>
-        <td><span class="badge-action action-${registro.tipo}">${registro.accion}</span></td>
-        <td>${registro.producto}</td>
-        <td>${registro.usuario}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  </script>
-
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
-  <script src="js/mobile.js"></script>
-  <script src="js/logout.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/session-manager.js"></script>
+  
+  <script>
+    // Sistema de gestión de historial corregido
+    class HistoryManager {
+      constructor() {
+        this.apiBaseUrl = 'https://healtyapi.bsite.net/api';
+        this.currentUser = this.getCurrentUser();
+      }
 
+      getCurrentUser() {
+        const userElement = document.querySelector('.user-box span');
+        return {
+          id: 1,
+          name: userElement ? userElement.textContent.trim() : 'Usuario Desconocido'
+        };
+      }
+
+      async getAllHistory() {
+        try {
+          const response = await fetch(`${this.apiBaseUrl}/histories`);
+          if (!response.ok) {
+            throw new Error(`Error al obtener historial: ${response.statusText}`);
+          }
+          const data = await response.json();
+          
+          // Validar que sea un array
+          if (!Array.isArray(data)) {
+            console.warn('Respuesta del historial no es un array:', data);
+            return [];
+          }
+          
+          // Transformar datos al formato esperado
+          return data.map(item => this.transformApiResponse(item));
+        } catch (error) {
+          console.error('Error al obtener todo el historial:', error);
+          throw error;
+        }
+      }
+
+      // Transformar respuesta de API al formato interno esperado
+      transformApiResponse(apiItem) {
+        try {
+          // Mapear del formato de API al formato interno
+          return {
+            id: apiItem.id_history,
+            unitId: apiItem.UnitInfo?.id_unit || null,
+            userId: apiItem.UserInfo?.id_user || null,
+            actionType: this.mapApiActionToInternalType(apiItem.ActionInfo?.act),
+            actionDate: apiItem.date,
+            actionDetails: JSON.stringify({
+              userName: apiItem.UserInfo?.name || 'Desconocido',
+              userEmail: apiItem.UserInfo?.email || '',
+              productName: apiItem.UnitInfo?.ProductName || 'Producto desconocido',
+              serialNumber: apiItem.UnitInfo?.serial_number || '',
+              originalAction: apiItem.ActionInfo?.act || '',
+              timestamp: apiItem.date
+            })
+          };
+        } catch (error) {
+          console.error('Error al transformar item de API:', error, apiItem);
+          // Retornar item de fallback
+          return {
+            id: apiItem.id_history || Date.now(),
+            unitId: apiItem.UnitInfo?.id_unit || 0,
+            userId: 1,
+            actionType: 'UNKNOWN_ACTION',
+            actionDate: apiItem.date || new Date().toISOString(),
+            actionDetails: JSON.stringify({
+              userName: 'Usuario Desconocido',
+              error: 'Error al procesar datos de API',
+              originalData: apiItem
+            })
+          };
+        }
+      }
+
+      // Mapear acciones de API a tipos internos
+      mapApiActionToInternalType(apiAction) {
+        const actionMap = {
+          'Aprobo Producto': 'PRODUCT_CREATED',
+          'Producto Creado': 'PRODUCT_CREATED',
+          'Producto Actualizado': 'PRODUCT_UPDATED',
+          'Producto Desactivado': 'PRODUCT_DEACTIVATED',
+          'Producto Reactivado': 'PRODUCT_REACTIVATED',
+          'Préstamo Solicitado': 'LOAN_REQUESTED',
+          'Préstamo Devuelto': 'LOAN_RETURNED',
+          'Estado Cambiado': 'STATUS_CHANGED',
+          'Ubicación Cambiada': 'LOCATION_CHANGED',
+          'Revisión Realizada': 'CHECK_PERFORMED'
+        };
+
+        return actionMap[apiAction] || 'UNKNOWN_ACTION';
+      }
+
+      async getHistoryByUnit(unitId) {
+        try {
+          // Validar unitId
+          if (!unitId || isNaN(parseInt(unitId))) {
+            console.warn('unitId inválido:', unitId);
+            return [];
+          }
+
+          const response = await fetch(`${this.apiBaseUrl}/histories/byUnit?unitId=${parseInt(unitId)}`);
+          if (!response.ok) {
+            throw new Error(`Error al obtener historial: ${response.statusText}`);
+          }
+          const data = await response.json();
+          
+          if (!Array.isArray(data)) {
+            return [];
+          }
+          
+          return data.map(item => this.transformApiResponse(item));
+        } catch (error) {
+          console.error('Error al obtener historial por unidad:', error);
+          return [];
+        }
+      }
+
+      formatDate(dateString) {
+        try {
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) {
+            return 'Fecha inválida';
+          }
+          return date.toLocaleString('es-MX', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+        } catch (error) {
+          console.error('Error al formatear fecha:', error);
+          return 'Fecha inválida';
+        }
+      }
+
+      getActionIcon(actionType) {
+        const icons = {
+          'PRODUCT_CREATED': 'fas fa-plus-circle',
+          'PRODUCT_UPDATED': 'fas fa-edit',
+          'PRODUCT_DEACTIVATED': 'fas fa-times-circle',
+          'PRODUCT_REACTIVATED': 'fas fa-check-circle',
+          'LOAN_REQUESTED': 'fas fa-hand-holding',
+          'LOAN_RETURNED': 'fas fa-undo',
+          'STATUS_CHANGED': 'fas fa-exchange-alt',
+          'LOCATION_CHANGED': 'fas fa-map-marker-alt',
+          'CHECK_PERFORMED': 'fas fa-clipboard-check',
+          'UNKNOWN_ACTION': 'fas fa-question-circle'
+        };
+        return icons[actionType] || 'fas fa-info-circle';
+      }
+
+      getActionColor(actionType) {
+        const colors = {
+          'PRODUCT_CREATED': 'success',
+          'PRODUCT_UPDATED': 'primary',
+          'PRODUCT_DEACTIVATED': 'danger',
+          'PRODUCT_REACTIVATED': 'success',
+          'LOAN_REQUESTED': 'warning',
+          'LOAN_RETURNED': 'info',
+          'STATUS_CHANGED': 'secondary',
+          'LOCATION_CHANGED': 'info',
+          'CHECK_PERFORMED': 'primary',
+          'UNKNOWN_ACTION': 'warning'
+        };
+        return colors[actionType] || 'secondary';
+      }
+
+      getActionDescription(actionType) {
+        const descriptions = {
+          'PRODUCT_CREATED': 'Producto creado',
+          'PRODUCT_UPDATED': 'Producto actualizado',
+          'PRODUCT_DEACTIVATED': 'Producto desactivado',
+          'PRODUCT_REACTIVATED': 'Producto reactivado',
+          'LOAN_REQUESTED': 'Préstamo solicitado',
+          'LOAN_RETURNED': 'Préstamo devuelto',
+          'STATUS_CHANGED': 'Estado modificado',
+          'LOCATION_CHANGED': 'Ubicación cambiada',
+          'CHECK_PERFORMED': 'Revisión realizada',
+          'UNKNOWN_ACTION': 'Acción desconocida'
+        };
+        return descriptions[actionType] || 'Acción realizada';
+      }
+
+      // Función para parsear detalles de forma segura
+      parseActionDetails(actionDetails) {
+        if (!actionDetails) {
+          return { error: 'Sin detalles disponibles' };
+        }
+
+        if (typeof actionDetails === 'object') {
+          return actionDetails;
+        }
+
+        if (typeof actionDetails === 'string') {
+          if (actionDetails === 'undefined' || actionDetails === 'null') {
+            return { error: 'Detalles no definidos' };
+          }
+
+          try {
+            return JSON.parse(actionDetails);
+          } catch (e) {
+            console.error('Error al parsear detalles de acción:', e, 'Contenido:', actionDetails);
+            return { 
+              error: 'Error de formato en detalles',
+              rawContent: actionDetails
+            };
+          }
+        }
+
+        return { error: 'Formato de detalles desconocido' };
+      }
+    }
+
+    // Variables globales
+    let allHistoryData = [];
+    let filteredHistoryData = [];
+    let currentPage = 0;
+    const itemsPerPage = 20;
+    let isLoading = false;
+    let historyManager;
+    
+    // Inicializar página
+    document.addEventListener('DOMContentLoaded', async () => {
+      historyManager = new HistoryManager();
+      await loadHistoryData();
+      setupEventListeners();
+    });
+    
+    // Cargar datos de historial
+    async function loadHistoryData() {
+      try {
+        showLoadingSkeleton(true);
+        showErrorState(false);
+        
+        allHistoryData = await historyManager.getAllHistory();
+        
+        // Validar datos recibidos
+        if (!Array.isArray(allHistoryData)) {
+          throw new Error('Los datos del historial no son válidos');
+        }
+        
+        // Ordenar por fecha descendente (más reciente primero)
+        allHistoryData.sort((a, b) => {
+          const dateA = new Date(a.actionDate);
+          const dateB = new Date(b.actionDate);
+          return dateB - dateA;
+        });
+        
+        filteredHistoryData = [...allHistoryData];
+        
+        // Actualizar estadísticas
+        updateStats(allHistoryData);
+        
+        // Poblar filtros
+        populateFilters(allHistoryData);
+        
+        // Renderizar historial
+        renderHistory();
+        
+        showLoadingSkeleton(false);
+        
+        console.log('Historial cargado exitosamente:', allHistoryData.length, 'registros');
+        
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+        showLoadingSkeleton(false);
+        showErrorState(true, error.message);
+      }
+    }
+    
+    // Mostrar/ocultar skeleton de carga
+    function showLoadingSkeleton(show) {
+      const skeleton = document.getElementById('loadingSkeleton');
+      
+      if (skeleton) {
+        if (show) {
+          skeleton.style.display = 'block';
+          hideAllStates();
+        } else {
+          skeleton.style.display = 'none';
+        }
+      }
+    }
+
+    // Mostrar/ocultar estado de error
+    function showErrorState(show, message = '') {
+      const errorState = document.getElementById('errorState');
+      const errorMessage = document.getElementById('errorMessage');
+      
+      if (errorState) {
+        if (show) {
+          errorState.style.display = 'block';
+          if (errorMessage && message) {
+            errorMessage.textContent = message;
+          }
+          hideAllStates(true);
+        } else {
+          errorState.style.display = 'none';
+        }
+      }
+    }
+
+    // Ocultar todos los estados
+    function hideAllStates(exceptError = false) {
+      const states = ['emptyState', 'noResultsState'];
+      if (!exceptError) {
+        states.push('errorState');
+      }
+      
+      states.forEach(stateId => {
+        const element = document.getElementById(stateId);
+        if (element) {
+          element.style.display = 'none';
+        }
+      });
+    }
+
+    // Función para reintentar cargar historial
+    function retryLoadHistory() {
+      loadHistoryData();
+    }
+    
+    // Actualizar estadísticas
+    function updateStats(data) {
+      const statsContainer = document.getElementById('statsCards');
+      if (!statsContainer) return;
+      
+      // Calcular estadísticas con validación
+      const totalActions = data.length;
+      const uniqueUsers = new Set();
+      const uniqueProducts = new Set();
+      
+      data.forEach(item => {
+        try {
+          if (item.unitId) {
+            uniqueProducts.add(item.unitId);
+          }
+          
+          const details = historyManager.parseActionDetails(item.actionDetails);
+          if (details.userName) {
+            uniqueUsers.add(details.userName);
+          }
+        } catch (e) {
+          // Ignorar errores individuales
+        }
+      });
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const actionsToday = data.filter(item => {
+        try {
+          const actionDate = new Date(item.actionDate);
+          actionDate.setHours(0, 0, 0, 0);
+          return actionDate.getTime() === today.getTime();
+        } catch (e) {
+          return false;
+        }
+      }).length;
+      
+      // Renderizar estadísticas
+      statsContainer.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-number text-primary">${totalActions}</div>
+          <div class="stat-label">Total de Actividades</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number text-success">${uniqueProducts.size}</div>
+          <div class="stat-label">Productos Afectados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number text-info">${uniqueUsers.size}</div>
+          <div class="stat-label">Usuarios Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number text-warning">${actionsToday}</div>
+          <div class="stat-label">Actividades Hoy</div>
+        </div>
+      `;
+    }
+    
+    // Poblar filtros dinámicamente
+    function populateFilters(data) {
+      const userSelect = document.getElementById('filterUser');
+      if (!userSelect) return;
+      
+      const users = new Set();
+      
+      data.forEach(item => {
+        try {
+          const details = historyManager.parseActionDetails(item.actionDetails);
+          if (details.userName && !details.error) {
+            users.add(details.userName);
+          }
+        } catch (e) {
+          // Ignorar errores de parsing
+        }
+      });
+      
+      // Limpiar opciones existentes (excepto la primera)
+      userSelect.innerHTML = '<option value="">Todos los usuarios</option>';
+      
+      // Agregar usuarios únicos
+      Array.from(users).sort().forEach(user => {
+        const option = document.createElement('option');
+        option.value = user;
+        option.textContent = user;
+        userSelect.appendChild(option);
+      });
+    }
+    
+    // Renderizar historial
+    function renderHistory() {
+      const container = document.getElementById('historyContainer');
+      if (!container) return;
+      
+      hideAllStates();
+      
+      if (filteredHistoryData.length === 0) {
+        if (allHistoryData.length === 0) {
+          showEmptyState(true);
+        } else {
+          showNoResultsState(true);
+        }
+        return;
+      }
+      
+      // Limpiar contenedor
+      container.innerHTML = '';
+      currentPage = 0;
+      
+      // Cargar primera página
+      loadMoreHistoryItems();
+    }
+    
+    // Cargar más elementos de historial
+    function loadMoreHistoryItems() {
+      if (isLoading) return;
+      
+      const startIndex = currentPage * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, filteredHistoryData.length);
+      
+      if (startIndex >= filteredHistoryData.length) return;
+      
+      isLoading = true;
+      
+      const container = document.getElementById('historyContainer');
+      if (!container) {
+        isLoading = false;
+        return;
+      }
+      
+      const newItems = filteredHistoryData.slice(startIndex, endIndex);
+      
+      newItems.forEach((item, index) => {
+        try {
+          const historyCard = createHistoryCard(item, startIndex + index === filteredHistoryData.length - 1);
+          container.appendChild(historyCard);
+        } catch (error) {
+          console.error('Error al crear tarjeta de historial:', error, item);
+        }
+      });
+      
+      currentPage++;
+      isLoading = false;
+    }
+    
+    // Crear tarjeta de historial con validaciones mejoradas
+    function createHistoryCard(item, isLast = false) {
+      const card = document.createElement('div');
+      card.className = `history-card ${isLast ? '' : 'timeline-connector'}`;
+      
+      // Validar datos del item - estructura corregida
+      if (!item || !item.actionType || item.unitId === null || item.unitId === undefined) {
+        console.warn('Item de historial inválido:', item);
+        card.innerHTML = `
+          <div class="history-header">
+            <div class="history-action text-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span class="fw-bold">Registro inválido</span>
+            </div>
+            <small class="text-muted">Datos incompletos</small>
+          </div>
+        `;
+        return card;
+      }
+      
+      // Parsear detalles de forma segura
+      const details = historyManager.parseActionDetails(item.actionDetails);
+      
+      const actionIcon = historyManager.getActionIcon(item.actionType);
+      const actionColor = historyManager.getActionColor(item.actionType);
+      const actionDescription = historyManager.getActionDescription(item.actionType);
+      const formattedDate = historyManager.formatDate(item.actionDate);
+      
+      // Crear ID único para el detalle
+      const detailId = `${item.id || item.unitId}_${Date.now()}`;
+      
+      card.innerHTML = `
+        <div class="history-header">
+          <div class="history-action text-${actionColor}">
+            <i class="${actionIcon}"></i>
+            <span class="fw-bold">${actionDescription}</span>
+            ${details.bulkOperation ? `<span class="bulk-indicator ms-2">Operación en lote</span>` : ''}
+          </div>
+          <small class="text-muted">${formattedDate}</small>
+        </div>
+        <div class="history-details">
+          <div class="history-meta">
+            <div class="meta-item">
+              <div class="meta-label">ID Producto</div>
+              <div class="meta-value">#${item.unitId}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Usuario</div>
+              <div class="meta-value">${details.userName || 'Desconocido'}</div>
+            </div>
+            ${details.productName ? `
+              <div class="meta-item">
+                <div class="meta-label">Producto</div>
+                <div class="meta-value">${details.productName}</div>
+              </div>
+            ` : ''}
+            ${details.serialNumber ? `
+              <div class="meta-item">
+                <div class="meta-label">Serie</div>
+                <div class="meta-value">${details.serialNumber}</div>
+              </div>
+            ` : ''}
+          </div>
+          
+          ${renderActionSpecificDetails(item.actionType, details)}
+          
+          <div class="mt-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="showHistoryDetail('${detailId}', ${item.unitId}, '${item.actionType}')">
+              <i class="fas fa-eye me-1"></i>Ver detalles
+            </button>
+          </div>
+        </div>
+      `;
+      
+      return card;
+    }
+    
+    // Renderizar detalles específicos por tipo de acción
+    function renderActionSpecificDetails(actionType, details) {
+      if (details.error) {
+        return `
+          <div class="alert alert-warning">
+            <small><i class="fas fa-exclamation-triangle me-1"></i>${details.error}</small>
+          </div>
+        `;
+      }
+      
+      let specificDetails = '';
+      
+      try {
+        switch (actionType) {
+          case 'PRODUCT_CREATED':
+            if (details.originalAction) {
+              specificDetails = `
+                <div class="alert alert-success">
+                  <strong>Acción original:</strong> ${details.originalAction}
+                </div>
+              `;
+            }
+            break;
+            
+          case 'PRODUCT_UPDATED':
+            if (details.changes && typeof details.changes === 'object') {
+              specificDetails = `
+                <div class="changes-list">
+                  <strong>Cambios realizados:</strong>
+                  ${Object.entries(details.changes).map(([field, change]) => `
+                    <div class="change-item">
+                      <span class="change-field">${field}:</span>
+                      <div>
+                        <span class="change-old">${change.old || 'N/A'}</span>
+                        <i class="fas fa-arrow-right mx-2"></i>
+                        <span class="change-new">${change.new || 'N/A'}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            }
+            break;
+            
+          case 'PRODUCT_DEACTIVATED':
+            if (details.reason) {
+              specificDetails = `
+                <div class="alert alert-warning">
+                  <strong>Motivo:</strong> ${details.reason}
+                </div>
+              `;
+            }
+            break;
+            
+          case 'LOAN_REQUESTED':
+            specificDetails = `
+              <div class="row">
+                ${details.borrower ? `
+                  <div class="col-md-6">
+                    <small class="text-muted">Solicitante:</small><br>
+                    <strong>${details.borrower}</strong>
+                  </div>
+                ` : ''}
+                ${details.expectedReturn ? `
+                  <div class="col-md-6">
+                    <small class="text-muted">Fecha esperada de devolución:</small><br>
+                    <strong>${new Date(details.expectedReturn).toLocaleDateString('es-MX')}</strong>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+            break;
+            
+          case 'UNKNOWN_ACTION':
+            if (details.originalAction) {
+              specificDetails = `
+                <div class="alert alert-info">
+                  <strong>Acción original:</strong> ${details.originalAction}
+                </div>
+              `;
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('Error al renderizar detalles específicos:', error);
+        specificDetails = `
+          <div class="alert alert-warning">
+            <small>Error al procesar detalles de la acción</small>
+          </div>
+        `;
+      }
+      
+      return specificDetails;
+    }
+    
+    // Mostrar detalle completo de historial
+    async function showHistoryDetail(historyId, unitId, actionType) {
+      try {
+        // Validar parámetros
+        if (!unitId || isNaN(parseInt(unitId))) {
+          Swal.fire('Error', 'ID de producto inválido', 'error');
+          return;
+        }
+        
+        const unitHistory = await historyManager.getHistoryByUnit(unitId);
+        
+        if (!unitHistory || unitHistory.length === 0) {
+          Swal.fire('Información', 'No se encontró historial para este producto', 'info');
+          return;
+        }
+        
+        // Buscar el elemento específico o usar el primero si no se encuentra
+        let specificHistory = unitHistory.find(h => 
+          h.id && h.id.toString() === historyId.split('_')[0]
+        );
+        
+        if (!specificHistory) {
+          specificHistory = unitHistory[0]; // Usar el primer registro si no se encuentra específico
+        }
+        
+        const details = historyManager.parseActionDetails(specificHistory.actionDetails);
+        const modalContent = document.getElementById('historyDetailContent');
+        const actionDescription = historyManager.getActionDescription(actionType);
+        const formattedDate = historyManager.formatDate(specificHistory.actionDate);
+        
+        if (modalContent) {
+          modalContent.innerHTML = `
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Información General</h6>
+                <ul class="list-unstyled">
+                  <li><strong>Acción:</strong> ${actionDescription}</li>
+                  <li><strong>Fecha:</strong> ${formattedDate}</li>
+                  <li><strong>Usuario:</strong> ${details.userName || 'Desconocido'}</li>
+                  <li><strong>ID Producto:</strong> #${unitId}</li>
+                  ${details.productName ? `<li><strong>Producto:</strong> ${details.productName}</li>` : ''}
+                  ${details.serialNumber ? `<li><strong>Serie:</strong> ${details.serialNumber}</li>` : ''}
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Detalles de la Acción</h6>
+                <div class="bg-light p-3 rounded">
+                  ${details.error ? 
+                    `<div class="text-warning">${details.error}</div>` :
+                    `<pre class="mb-0" style="white-space: pre-wrap; font-family: inherit; font-size: 0.9rem;">${JSON.stringify(details, null, 2)}</pre>`
+                  }
+                </div>
+              </div>
+            </div>
+            
+            <hr>
+            
+            <div>
+              <h6>Historial Completo del Producto</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Acción</th>
+                      <th>Usuario</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${unitHistory.slice(0, 10).map(h => {
+                      const hDetails = historyManager.parseActionDetails(h.actionDetails);
+                      
+                      return `
+                        <tr>
+                          <td>${historyManager.formatDate(h.actionDate)}</td>
+                          <td>${historyManager.getActionDescription(h.actionType)}</td>
+                          <td>${hDetails.userName || 'Desconocido'}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+                ${unitHistory.length > 10 ? '<small class="text-muted">Mostrando los últimos 10 registros</small>' : ''}
+              </div>
+            </div>
+          `;
+          
+          const modal = new bootstrap.Modal(document.getElementById('historyDetailModal'));
+          modal.show();
+        }
+        
+      } catch (error) {
+        console.error('Error al mostrar detalle:', error);
+        Swal.fire('Error', 'Error al cargar los detalles del historial', 'error');
+      }
+    }
+    
+    // Configurar event listeners
+    function setupEventListeners() {
+      // Scroll infinito
+      window.addEventListener('scroll', () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+          loadMoreHistoryItems();
+        }
+      });
+      
+      // Filtros en tiempo real
+      ['filterActionType', 'filterUser', 'filterDateFrom', 'filterDateTo', 'filterUnitId'].forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+          element.addEventListener('change', applyHistoryFilters);
+          if (element.type === 'text') {
+            element.addEventListener('input', debounce(applyHistoryFilters, 500));
+          }
+        }
+      });
+    }
+    
+    // Aplicar filtros de historial
+    function applyHistoryFilters() {
+      const actionType = document.getElementById('filterActionType')?.value || '';
+      const user = document.getElementById('filterUser')?.value || '';
+      const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+      const dateTo = document.getElementById('filterDateTo')?.value || '';
+      const unitId = document.getElementById('filterUnitId')?.value || '';
+      
+      filteredHistoryData = allHistoryData.filter(item => {
+        try {
+          // Validar item básico - corregido para nueva estructura
+          if (!item || !item.actionType || item.unitId === null || item.unitId === undefined) {
+            return false;
+          }
+          
+          // Filtro por tipo de acción
+          if (actionType && item.actionType !== actionType) return false;
+          
+          // Filtro por usuario
+          if (user) {
+            const details = historyManager.parseActionDetails(item.actionDetails);
+            if (!details.userName || details.userName !== user) return false;
+          }
+          
+          // Filtro por fecha desde
+          if (dateFrom) {
+            const itemDate = new Date(item.actionDate);
+            const filterDate = new Date(dateFrom);
+            if (isNaN(itemDate.getTime()) || itemDate < filterDate) return false;
+          }
+          
+          // Filtro por fecha hasta
+          if (dateTo) {
+            const itemDate = new Date(item.actionDate);
+            const filterDate = new Date(dateTo);
+            filterDate.setHours(23, 59, 59, 999);
+            if (isNaN(itemDate.getTime()) || itemDate > filterDate) return false;
+          }
+          
+          // Filtro por ID de producto
+          if (unitId && !item.unitId.toString().includes(unitId)) return false;
+          
+          return true;
+        } catch (error) {
+          console.error('Error al aplicar filtros a item:', error, item);
+          return false;
+        }
+      });
+      
+      renderHistory();
+    }
+    
+    // Resetear filtros
+    function resetHistoryFilters() {
+      ['filterActionType', 'filterUser', 'filterDateFrom', 'filterDateTo', 'filterUnitId'].forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+          element.value = '';
+        }
+      });
+      
+      filteredHistoryData = [...allHistoryData];
+      renderHistory();
+    }
+    
+    // Mostrar estado vacío
+    function showEmptyState(show) {
+      const emptyState = document.getElementById('emptyState');
+      if (emptyState) {
+        emptyState.style.display = show ? 'block' : 'none';
+      }
+      if (show) {
+        hideOtherStates('emptyState');
+      }
+    }
+    
+    // Mostrar estado sin resultados
+    function showNoResultsState(show) {
+      const noResultsState = document.getElementById('noResultsState');
+      if (noResultsState) {
+        noResultsState.style.display = show ? 'block' : 'none';
+      }
+      if (show) {
+        hideOtherStates('noResultsState');
+      }
+    }
+    
+    // Ocultar otros estados
+    function hideOtherStates(except) {
+      const states = ['emptyState', 'noResultsState', 'errorState'];
+      states.forEach(stateId => {
+        if (stateId !== except) {
+          const element = document.getElementById(stateId);
+          if (element) {
+            element.style.display = 'none';
+          }
+        }
+      });
+      
+      const container = document.getElementById('historyContainer');
+      if (container && except !== 'historyContainer') {
+        container.style.display = except ? 'none' : 'block';
+      }
+    }
+    
+    // Función debounce para optimizar búsqueda
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+    
+    // Hacer funciones globales
+    window.showHistoryDetail = showHistoryDetail;
+    window.applyHistoryFilters = applyHistoryFilters;
+    window.resetHistoryFilters = resetHistoryFilters;
+    window.retryLoadHistory = retryLoadHistory;
+    window.historyManager = historyManager;
+    
+    // Función de manejo de logout
+    function handleLogout() {
+      // Limpiar datos si es necesario
+      allHistoryData = [];
+      filteredHistoryData = [];
+      // Redireccionar será manejado por el enlace
+    }
+    
+    window.handleLogout = handleLogout;
+  </script>
 </body>
 </html>

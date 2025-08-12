@@ -319,22 +319,18 @@
   <div class="dashboard-container">
     <aside class="sidebar">
       <div class="sidebar-header" title="Panel Administrativo">
-        <i class="fas fa-shield-alt"></i>
         Admin Panel
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="#" data-section="dashboard" class="nav-link active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-          <li><a href="#" data-section="users" class="nav-link"><i class="fas fa-users"></i> <span>Usuarios</span></a></li>
-          <li><a href="#" data-section="students" class="nav-link"><i class="fas fa-user-graduate"></i> <span>Estudiantes</span></a></li>
-          <li><a href="#" data-section="brands" class="nav-link"><i class="fas fa-tags"></i> <span>Marcas</span></a></li>
-          <li><a href="#" data-section="categories" class="nav-link"><i class="fas fa-folder"></i> <span>Categorías</span></a></li>
-          <li><a href="#" data-section="areas" class="nav-link"><i class="fas fa-map-marker-alt"></i> <span>Áreas</span></a></li>
-          <li><a href="#" data-section="locations" class="nav-link"><i class="fas fa-location-arrow"></i> <span>Ubicaciones</span></a></li>
-          <li><a href="#" data-section="laboratories" class="nav-link"><i class="fas fa-flask"></i> <span>Laboratorios</span></a></li>
-          <li><a href="#" data-section="grades" class="nav-link"><i class="fas fa-graduation-cap"></i> <span>Grados</span></a></li>
-          <li><a href="#" data-section="groups" class="nav-link"><i class="fas fa-users-cog"></i> <span>Grupos</span></a></li>
-          <li><a href="#" data-section="status" class="nav-link"><i class="fas fa-info-circle"></i> <span>Estados</span></a></li>
+          <li><a href="index.html" class="active"><i class="fas fa-cubes"></i> Inventario</a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
+          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
+          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+          
+          <li><a href="excel.html"><i class="fas fa-history"></i> Descargar tablas</a></li>
+          <li><a href="dashboard.html"><i class="fas fa-shield-alt"></i> Panel administrativo</a></li>
         </ul>
       </nav>
     </aside>
@@ -1030,30 +1026,6 @@
       loadDashboardData();
     });
 
-    // Authentication check
-    function checkAuthentication() {
-      const userData = localStorage.getItem('adminUser');
-      if (!userData) {
-        window.location.href = 'login.html';
-        return false;
-      }
-      
-      try {
-        currentUser = JSON.parse(userData);
-        if (!currentUser || !currentUser.roleInfo || currentUser.roleInfo.name !== 'admin') {
-          showAlert('Acceso denegado. Solo los administradores pueden acceder a esta página.', 'danger');
-          setTimeout(() => window.location.href = 'login.html', 2000);
-          return false;
-        }
-        
-        document.getElementById('admin-name').textContent = currentUser.name || 'Administrador';
-        return true;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        window.location.href = 'login.html';
-        return false;
-      }
-    }
 
     // Navigation
     function initializeNavigation() {

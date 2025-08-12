@@ -8,183 +8,183 @@ document.addEventListener('DOMContentLoaded', () => {
     let isLoading = false; // Flag para evitar múltiples cargas simultáneas
 
     // Crear pantalla de carga overlay
-    function createLoadingScreen() {
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.id = 'loadingOverlay';
-        loadingOverlay.innerHTML = `
-            <div class="loading-container">
-                <div class="loading-content">
-                    <div class="loading-spinner">
-                        <div class="spinner-ring"></div>
-                        <div class="spinner-ring"></div>
-                        <div class="spinner-ring"></div>
-                    </div>
-                    <h3 class="loading-title">Cargando Inventario</h3>
-                    <p class="loading-text" id="loadingText">Conectando con el servidor...</p>
-                    <div class="loading-progress">
-                        <div class="progress-bar" id="progressBar"></div>
-                    </div>
-                    <div class="loading-stats" id="loadingStats">
-                        <span>Preparando datos...</span>
-                    </div>
+    // Crear pantalla de carga overlay mejorada
+function createLoadingScreen() {
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loadingOverlay';
+    loadingOverlay.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <h3 class="loading-title">Cargando Inventario</h3>
+                <p class="loading-text" id="loadingText">Conectando con el servidor...</p>
+                <div class="loading-progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="loading-stats" id="loadingStats">
+                    <span>Preparando datos...</span>
                 </div>
             </div>
-        `;
+        </div>
+    `;
 
-        // Agregar estilos de la pantalla de carga
-        const loadingStyles = document.createElement('style');
-        loadingStyles.textContent = `
-            #loadingOverlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                opacity: 1;
-                transition: opacity 0.5s ease-out;
-            }
-
-            .loading-container {
-                text-align: center;
-                color: white;
-                max-width: 400px;
-                padding: 2rem;
-            }
-
-            .loading-spinner {
-                position: relative;
-                margin: 0 auto 2rem;
-                width: 80px;
-                height: 80px;
-            }
-
-            .spinner-ring {
-                position: absolute;
-                border: 3px solid transparent;
-                border-radius: 50%;
-                animation: spin 2s linear infinite;
-            }
-
-            .spinner-ring:nth-child(1) {
-                width: 80px;
-                height: 80px;
-                border-top-color: #fff;
-                animation-delay: 0s;
-            }
-
-            .spinner-ring:nth-child(2) {
-                width: 60px;
-                height: 60px;
-                top: 10px;
-                left: 10px;
-                border-top-color: rgba(255,255,255,0.7);
-                animation-delay: -0.4s;
-            }
-
-            .spinner-ring:nth-child(3) {
-                width: 40px;
-                height: 40px;
-                top: 20px;
-                left: 20px;
-                border-top-color: rgba(255,255,255,0.4);
-                animation-delay: -0.8s;
-            }
-
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            .loading-title {
-                font-size: 1.8rem;
-                font-weight: 600;
-                margin-bottom: 0.5rem;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            }
-
-            .loading-text {
-                font-size: 1rem;
-                opacity: 0.9;
-                margin-bottom: 1.5rem;
-                min-height: 24px;
-            }
-
-            .loading-progress {
-                width: 100%;
-                height: 4px;
-                background: rgba(255,255,255,0.2);
-                border-radius: 2px;
-                overflow: hidden;
-                margin-bottom: 1rem;
-            }
-
-            .progress-bar {
-                height: 100%;
-                background: linear-gradient(90deg, #4facfe, #00f2fe);
-                border-radius: 2px;
-                width: 0%;
-                transition: width 0.3s ease;
-                position: relative;
-            }
-
-            .progress-bar::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-                animation: shimmer 2s infinite;
-            }
-
-            @keyframes shimmer {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-
-            .loading-stats {
-                font-size: 0.9rem;
-                opacity: 0.8;
-                min-height: 20px;
-            }
-
-            .fade-out {
-                opacity: 0 !important;
-            }
-        `;
-        document.head.appendChild(loadingStyles);
-
-        document.body.appendChild(loadingOverlay);
-        return loadingOverlay;
-    }
-
-    // Actualizar progreso de carga
-    function updateLoadingProgress(progress, text, stats) {
-        const loadingText = document.getElementById('loadingText');
-        const progressBar = document.getElementById('progressBar');
-        const loadingStats = document.getElementById('loadingStats');
-
-        if (loadingText) loadingText.textContent = text;
-        if (progressBar) progressBar.style.width = `${progress}%`;
-        if (loadingStats && stats) loadingStats.textContent = stats;
-    }
-
-    // Remover pantalla de carga
-    function removeLoadingScreen() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.classList.add('fade-out');
-            setTimeout(() => {
-                overlay.remove();
-            }, 500);
+    // Agregar estilos de la pantalla de carga mejorada
+    const loadingStyles = document.createElement('style');
+    loadingStyles.textContent = `
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.4s ease-out;
         }
+
+        .loading-container {
+            text-align: center;
+            color: #495057;
+            max-width: 400px;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+
+        .loading-spinner {
+            margin: 0 auto 1.5rem;
+            width: 60px;
+            height: 60px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #343a40;
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            min-height: 24px;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-green-dark));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .loading-stats {
+            font-size: 0.9rem;
+            color: #6c757d;
+            min-height: 20px;
+        }
+
+        .fade-out {
+            opacity: 0 !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .loading-container {
+                max-width: 300px;
+                padding: 1.5rem;
+            }
+            
+            .loading-title {
+                font-size: 1.3rem;
+            }
+            
+            .spinner {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .loading-spinner {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    `;
+    document.head.appendChild(loadingStyles);
+
+    document.body.appendChild(loadingOverlay);
+    return loadingOverlay;
+}
+
+// Actualizar progreso de carga (sin cambios)
+function updateLoadingProgress(progress, text, stats) {
+    const loadingText = document.getElementById('loadingText');
+    const progressBar = document.getElementById('progressBar');
+    const loadingStats = document.getElementById('loadingStats');
+
+    if (loadingText) loadingText.textContent = text;
+    if (progressBar) progressBar.style.width = `${progress}%`;
+    if (loadingStats && stats) loadingStats.textContent = stats;
+}
+
+// Remover pantalla de carga (sin cambios)
+function removeLoadingScreen() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+            overlay.remove();
+        }, 400);
     }
+}
 
     // Función para obtener todos los datos del inventario
     async function fetchAllInventoryData() {
