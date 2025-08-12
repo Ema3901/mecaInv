@@ -1,35 +1,64 @@
 document.addEventListener('DOMContentLoaded', () => {
     const inventoryTableBody = document.getElementById('inventoryTableBody');
+    let inventoryData = []; // Variable global para almacenar los datos del inventario
 
-    // Hacer una solicitud GET a la API
-    fetch('https://healtyapi.bsite.net/api/product_units')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la solicitud: ' + response.statusText);
+    // Función para obtener datos de inventario y productos
+    async function fetchInventoryData() {
+        try {
+            // Hacer ambas peticiones en paralelo
+            const [unitsResponse, productsResponse] = await Promise.all([
+                fetch('https://healtyapi.bsite.net/api/product_units'),
+                fetch('https://healtyapi.bsite.net/api/inventories')
+            ]);
+
+            if (!unitsResponse.ok) {
+                throw new Error('Error en product_units: ' + unitsResponse.statusText);
             }
-            return response.json();  // Convertir la respuesta en formato JSON
-        })
-        .then(data => {
-            console.log("Datos obtenidos de la API:", data);  // Depuración: mostrar los datos
-            if (Array.isArray(data)) {
+            if (!productsResponse.ok) {
+                throw new Error('Error en inventories: ' + productsResponse.statusText);
+            }
+
+            const unitsData = await unitsResponse.json();
+            const productsData = await productsResponse.json();
+
+            console.log("Datos de product_units:", unitsData);
+            console.log("Datos de inventories:", productsData);
+
+            if (Array.isArray(unitsData) && Array.isArray(productsData)) {
                 // Filtrar solo los que tienen status "activo"
-                const activos = data.filter(item => 
+                const activos = unitsData.filter(item => 
                     item.Status && item.Status.toLowerCase() === 'activo'
                 );
 
+                // Crear un mapa de productos para búsqueda rápida por id_product
+                const productsMap = new Map();
+                productsData.forEach(product => {
+                    productsMap.set(product.id_product, product);
+                });
+
+                // Combinar datos de units con datos de productos
+                const combinedData = activos.map(unit => {
+                    const productDetails = productsMap.get(unit.ProductInfo.id_product);
+                    return {
+                        ...unit,
+                        ProductDetails: productDetails || null
+                    };
+                });
+
                 // Ordenar los productos por id_product
-                activos.sort((a, b) => {
+                combinedData.sort((a, b) => {
                     return a.ProductInfo.id_product - b.ProductInfo.id_product;
                 });
 
-                renderTable(activos);  // Pasar los datos filtrados a la función que renderiza la tabla
+                inventoryData = combinedData; // Guardar en variable global
+                renderTable(combinedData);
             } else {
-                console.error("La respuesta no es un array", data);
+                console.error("Una o ambas respuestas no son arrays");
             }
-        })
-        .catch(error => {
-            console.error("Error al obtener los datos:", error);  // Depuración: manejar el error
-        });
+        } catch (error) {
+            console.error("Error al obtener los datos:", error);
+        }
+    }
 
     function createAttributeDiv(label, value) {
         if (!value || value.trim() === '') value = 'No tiene';
@@ -67,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             inventoryTableBody.appendChild(row);
 
+            // Obtener marca del ProductDetails
+            const brandName = item.ProductDetails?.BrandInfo?.brand_name || 'No especificada';
+            
             // Fila expandible con más detalles
             const expandableRow = document.createElement('tr');
             expandableRow.classList.add('expandable-row');
@@ -76,9 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="expandable-content">
                       <div class="expandable-attributes">
                         ${createAttributeDiv('Etiquetado', item.LabelStatus)}
-                        ${createAttributeDiv('Tipo', item.ProductInfo.Category)}
+                        ${createAttributeDiv('Tipo', item.ProductDetails?.CategoryInfo?.category_name || 'No especificado')}
+                        ${createAttributeDiv('Marca', brandName)}
                         ${createAttributeDiv('Resguardante', item.GuardianInfo.name)}
-                        ${createAttributeDiv('Email', item.GuardianInfo.email)}
+                        ${createAttributeDiv('Observaciones', item.observations || item.ProductDetails?.description || 'Sin observaciones')}
                       </div>
                     </div>
                 </td>
@@ -94,13 +127,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Búsqueda de la tabla
-    document.getElementById('searchInput').addEventListener('keyup', searchTable);
-
+    // Función de búsqueda actualizada
     function searchTable() {
-        let input = document.getElementById('searchInput');
-        let filter = input.value.toUpperCase();
-        let filteredData = inventoryData.filter(item => item.ID.toString().includes(filter));
+        const input = document.getElementById('busquedaInput'); // Corregido el ID
+        if (!input) {
+            console.error("Elemento de búsqueda no encontrado");
+            return;
+        }
+        
+        const filter = input.value.toUpperCase();
+        const filteredData = inventoryData.filter(item => 
+            item.id_unit.toString().includes(filter) || 
+            item.ProductInfo.name.toUpperCase().includes(filter)
+        );
         renderTable(filteredData);
     }
+
+    // Búsqueda de la tabla - corregido el ID del input
+    const searchInput = document.getElementById('busquedaInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', searchTable);
+    }
+
+    // Función para limpiar búsqueda
+    window.limpiarBusqueda = function() {
+        const searchInput = document.getElementById('busquedaInput');
+        if (searchInput) {
+            searchInput.value = '';
+            renderTable(inventoryData);
+        }
+    }
+
+    // Inicializar la carga de datos
+    fetchInventoryData();
 });

@@ -38,6 +38,29 @@ async function fillSelect(selectEl, endpointInfo, placeholder = '--Selecciona--'
   }
 }
 
+async function fillInventories(selectEl) {
+  try {
+    const data = await fetchJSON(`${API_BASE}/inventories`);
+    selectEl.innerHTML = `<option value="">--Selecciona un producto existente--</option>`;
+    if (Array.isArray(data)) {
+      data.forEach(item => {
+        const id = item.id_product;
+        const name = item.name;
+        const model = item.model;
+        if (id === undefined || name === undefined) return;
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = `${name} - ${model || 'Sin modelo'}`;
+        opt.dataset.inventory = JSON.stringify(item);
+        selectEl.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    selectEl.innerHTML = `<option value="">Error cargando inventarios</option>`;
+    showMessage(`Error cargando inventarios: ${e.message}`, 'error');
+  }
+}
+
 async function fillGuardians(selectEl) {
   try {
     const data = await fetchJSON(`${API_BASE}/users`);
@@ -98,6 +121,47 @@ function showMessage(msg, type = 'info') {
   messagesContainer.appendChild(div);
 }
 
+// Función para mostrar/ocultar formularios según la opción seleccionada
+function toggleFormMode() {
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const newProductForm = document.getElementById('newProductForm');
+  const existingProductForm = document.getElementById('existingProductForm');
+  
+  if (mode === 'new') {
+    newProductForm.classList.remove('d-none');
+    existingProductForm.classList.add('d-none');
+  } else {
+    newProductForm.classList.add('d-none');
+    existingProductForm.classList.remove('d-none');
+  }
+}
+
+// Función para mostrar información del producto seleccionado
+function showSelectedProductInfo() {
+  const inventorySelect = document.getElementById('inventorySelect');
+  const selectedOption = inventorySelect.options[inventorySelect.selectedIndex];
+  const infoDiv = document.getElementById('selectedProductInfo');
+  
+  if (selectedOption.value && selectedOption.dataset.inventory) {
+    const inventory = JSON.parse(selectedOption.dataset.inventory);
+    infoDiv.innerHTML = `
+      <div class="alert alert-info">
+        <h6><i class="fas fa-info-circle me-2"></i>Información del producto seleccionado:</h6>
+        <ul class="mb-0">
+          <li><strong>Nombre:</strong> ${inventory.name}</li>
+          <li><strong>Modelo:</strong> ${inventory.model || 'N/A'}</li>
+          <li><strong>Descripción:</strong> ${inventory.description || 'N/A'}</li>
+          <li><strong>Especificaciones:</strong> ${inventory.specs || 'N/A'}</li>
+          <li><strong>Unidades actuales:</strong> ${inventory.UnitsCount || 0}</li>
+        </ul>
+      </div>
+    `;
+    infoDiv.classList.remove('d-none');
+  } else {
+    infoDiv.classList.add('d-none');
+  }
+}
+
 // Inicializar selects del paso 1
 document.addEventListener('DOMContentLoaded', async () => {
   await fillSelect(document.getElementById('categoria'), selectors.categoria);
@@ -105,6 +169,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   await fillSelect(document.getElementById('pendiente'), selectors.pendiente);
   await fillSelect(document.getElementById('condicion'), selectors.condicion);
   await fillSelect(document.getElementById('estado'), selectors.estado);
+  await fillInventories(document.getElementById('inventorySelect'));
+  
+  // Event listeners para el modo
+  document.querySelectorAll('input[name="mode"]').forEach(radio => {
+    radio.addEventListener('change', toggleFormMode);
+  });
+  
+  // Event listener para mostrar info del producto seleccionado
+  document.getElementById('inventorySelect').addEventListener('change', showSelectedProductInfo);
 });
 
 // Ir a paso 2
@@ -114,21 +187,43 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
   // Limpiar mensajes anteriores
   document.getElementById('messages').innerHTML = '';
   
-  // validar básicos
-  const nombre = document.getElementById('nombre').value.trim();
-  const modelo = document.getElementById('modelo').value.trim();
-  const descripcion = document.getElementById('descripcion').value.trim();
-  const categoria = document.getElementById('categoria').value;
-  const marca = document.getElementById('marca').value;
-  const especificaciones = document.getElementById('especificaciones').value.trim();
-  const unidades = parseInt(document.getElementById('unidades').value, 10);
-  const pendiente = document.getElementById('pendiente').value;
-  const condicion = document.getElementById('condicion').value;
-  const estado = document.getElementById('estado').value;
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  let productId = null;
+  let productName = '';
+  let unidades = 0;
+  
+  if (mode === 'new') {
+    // Validar campos para nuevo producto
+    const nombre = document.getElementById('nombre').value.trim();
+    const modelo = document.getElementById('modelo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const marca = document.getElementById('marca').value;
+    const especificaciones = document.getElementById('especificaciones').value.trim();
+    unidades = parseInt(document.getElementById('unidades').value, 10);
+    const pendiente = document.getElementById('pendiente').value;
+    const condicion = document.getElementById('condicion').value;
+    const estado = document.getElementById('estado').value;
 
-  if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
-    showMessage('Todos los campos del producto son obligatorios y unidades al menos 1.', 'error');
-    return;
+    if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
+      showMessage('Todos los campos del producto son obligatorios y unidades al menos 1.', 'error');
+      return;
+    }
+    
+    productName = nombre;
+  } else {
+    // Validar selección de producto existente
+    const inventorySelect = document.getElementById('inventorySelect');
+    productId = inventorySelect.value;
+    unidades = parseInt(document.getElementById('newUnits').value, 10);
+    
+    if (!productId || isNaN(unidades) || unidades < 1) {
+      showMessage('Debes seleccionar un producto existente y especificar al menos 1 unidad nueva.', 'error');
+      return;
+    }
+    
+    const selectedOption = inventorySelect.options[inventorySelect.selectedIndex];
+    productName = selectedOption.textContent;
   }
 
   // Mostrar loading
@@ -141,6 +236,24 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
     // Construir formularios de unidades dinámicamente
     const container = document.getElementById('unitsContainer');
     container.innerHTML = '';
+    
+    // Mostrar información del modo seleccionado
+    const modeInfo = document.getElementById('step2ModeInfo');
+    if (mode === 'new') {
+      modeInfo.innerHTML = `
+        <div class="alert alert-primary">
+          <i class="fas fa-plus-circle me-2"></i>
+          <strong>Modo:</strong> Crear nuevo producto "${productName}" con ${unidades} unidades
+        </div>
+      `;
+    } else {
+      modeInfo.innerHTML = `
+        <div class="alert alert-warning">
+          <i class="fas fa-layer-group me-2"></i>
+          <strong>Modo:</strong> Agregar ${unidades} unidades nuevas al producto "${productName}"
+        </div>
+      `;
+    }
     
     for (let i = 1; i <= unidades; i++) {
       const div = document.createElement('div');
@@ -157,7 +270,7 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
                 <input type="text" class="form-control" name="serial_${i}" required />
               </div>
               <div class="form-group mb-3">
-                <label class="form-label">Código Interno <span class="required">*</span></label>
+                <label class="form-label">Código de Etiqueta <span class="required">*</span></label>
                 <input type="text" class="form-control" name="codigo_${i}" required />
               </div>
               <div class="form-group mb-3">
@@ -217,7 +330,7 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
             </div>
             <div class="col-md-3">
               <div class="form-group mb-3">
-                <label class="form-label">Condición <span class="required">*</span></label>
+                <label class="form-label">Condición de Etiqueta <span class="required">*</span></label>
                 <select class="form-select status-select" name="condicion_${i}" required>
                   <option value="">Cargando...</option>
                 </select>
@@ -259,6 +372,10 @@ document.getElementById('toStep2').addEventListener('click', async (e) => {
     const disabledSelects = container.querySelectorAll('.disabled-select');
     for (const sel of disabledSelects) await fillSelect(sel, selectors.estado);
 
+    // Guardar el modo y productId para el paso de envío
+    document.getElementById('step2').dataset.mode = mode;
+    document.getElementById('step2').dataset.productId = productId || '';
+
     // Mostrar paso 2 y ocultar paso1
     document.getElementById('step1').classList.add('d-none');
     document.getElementById('step2').classList.remove('d-none');
@@ -298,64 +415,86 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
   btn.disabled = true;
 
   try {
-    // Recolectar paso 1
-    const nombre = document.getElementById('nombre').value.trim();
-    const modelo = document.getElementById('modelo').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const categoria = document.getElementById('categoria').value;
-    const marca = document.getElementById('marca').value;
-    const especificaciones = document.getElementById('especificaciones').value.trim();
-    const unidades = parseInt(document.getElementById('unidades').value, 10);
-    const fotoInput = document.getElementById('foto');
-    const fotoNombre = fotoInput.files[0] ? fotoInput.files[0].name : '';
-    const pendiente = document.getElementById('pendiente').value;
-    const condicion = document.getElementById('condicion').value;
-    const estado = document.getElementById('estado').value;
+    const mode = document.getElementById('step2').dataset.mode;
+    let id_product = document.getElementById('step2').dataset.productId;
+    let unidades = 0;
+    let productName = '';
+    let codigoInterno = '';
 
-    // Validación básica
-    if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
-      showMessage('Faltan datos obligatorios del producto.', 'error');
-      return;
+    if (mode === 'new') {
+      // Recolectar datos del paso 1 para crear nuevo producto
+      const nombre = document.getElementById('nombre').value.trim();
+      const modelo = document.getElementById('modelo').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const categoria = document.getElementById('categoria').value;
+      const marca = document.getElementById('marca').value;
+      const especificaciones = document.getElementById('especificaciones').value.trim();
+      unidades = parseInt(document.getElementById('unidades').value, 10);
+      const fotoInput = document.getElementById('foto');
+      const fotoNombre = fotoInput.files[0] ? fotoInput.files[0].name : '';
+      const pendiente = document.getElementById('pendiente').value;
+      const condicion = document.getElementById('condicion').value;
+      const estado = document.getElementById('estado').value;
+
+      // Validación básica
+      if (!nombre || !modelo || !descripcion || !categoria || !marca || !especificaciones || isNaN(unidades) || unidades < 1 || !pendiente || !condicion || !estado) {
+        showMessage('Faltan datos obligatorios del producto.', 'error');
+        return;
+      }
+
+      // Crear inventory
+      const inventoryPayload = {
+        name: nombre,
+        model: modelo,
+        description: descripcion,
+        specs: especificaciones,
+        picture: fotoNombre,
+        fk_category: parseInt(categoria, 10),
+        fk_brand: parseInt(marca, 10),
+        UnitsCount: unidades,
+      };
+
+      try {
+        const resp = await fetch(`${API_BASE}/inventories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inventoryPayload)
+        });
+        const invResp = await resp.json();
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        id_product = invResp.id_product;
+        if (!id_product) {
+          showMessage('No se recibió ID del inventory creado.', 'error');
+          console.log('Respuesta completa inventory:', invResp);
+          return;
+        }
+        
+        // Obtener el primer código interno para mostrarlo en el mensaje
+        const primerCodigo = document.getElementById('unitsContainer').querySelector(`[name=codigo_1]`).value.trim();
+        codigoInterno = primerCodigo;
+        
+        showMessage(`Producto creado con código interno ${codigoInterno}`, 'success');
+        productName = nombre;
+      } catch (err) {
+        showMessage(`Error creando producto: ${err.message}`, 'error');
+        return;
+      }
+    } else {
+      // Usar producto existente
+      id_product = parseInt(id_product, 10);
+      unidades = parseInt(document.getElementById('newUnits').value, 10);
+      const inventorySelect = document.getElementById('inventorySelect');
+      productName = inventorySelect.options[inventorySelect.selectedIndex].textContent;
+      
+      showMessage(`Agregando unidades al producto existente`, 'success');
     }
 
-    // 1. Crear inventory
-    const inventoryPayload = {
-      name: nombre,
-      model: modelo,
-      description: descripcion,
-      specs: especificaciones,
-      picture: fotoNombre,
-      fk_category: parseInt(categoria, 10),
-      fk_brand: parseInt(marca, 10),
-      UnitsCount: unidades,
-    };
-
-    let invResp;
-    try {
-      const resp = await fetch(`${API_BASE}/inventories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inventoryPayload)
-      });
-      invResp = await resp.json();
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    } catch (err) {
-      showMessage(`Error creando inventory: ${err.message}`, 'error');
-      return;
-    }
-
-    const id_product = invResp.id_product;
-    if (!id_product) {
-      showMessage('No se recibió ID del inventory creado.', 'error');
-      console.log('Respuesta completa inventory:', invResp);
-      return;
-    }
-    showMessage(`Inventory creado con ID ${id_product}`, 'success');
-
-    // 2. Crear cada unidad
+    // Crear cada unidad
     const unitsContainer = document.getElementById('unitsContainer');
     let successCount = 0;
     let errorCount = 0;
+    let createdUnits = []; // Para mostrar información de las unidades creadas
 
     for (let i = 1; i <= unidades; i++) {
       const serial = unitsContainer.querySelector(`[name=serial_${i}]`).value.trim();
@@ -378,7 +517,7 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
       }
 
       const unitPayload = {
-        fk_inventory: parseInt(id_product, 10),
+        fk_inventory: id_product,
         serial_number: serial,
         internal_code: codigo,
         observations: observacion,
@@ -402,6 +541,7 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         showMessage(`Unidad ${i} creada correctamente.`, 'success');
         successCount++;
+        createdUnits.push({ serial: serial, codigo: codigo });
       } catch (err) {
         showMessage(`Error creando unidad ${i}: ${err.message}`, 'error');
         console.log(`Payload unidad ${i}: `, unitPayload);
@@ -409,16 +549,51 @@ document.getElementById('submitAll').addEventListener('click', async (e) => {
       }
     }
 
-    // Mostrar resumen en el output
+    // Mostrar resumen en el output con tabla de unidades creadas
+    const actionText = mode === 'new' ? 'Producto creado' : 'Producto actualizado';
+    let unitsTable = '';
+    
+    if (createdUnits.length > 0) {
+      unitsTable = `
+        <div class="mt-3">
+          <h6>Unidades creadas exitosamente:</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped">
+              <thead>
+                <tr>
+                  <th>Serial</th>
+                  <th>Código de Etiqueta</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${createdUnits.map(unit => `
+                  <tr>
+                    <td>${unit.serial}</td>
+                    <td>${unit.codigo}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+    
+    const displayInfo = mode === 'new' && codigoInterno ? 
+      `${productName} (Código: ${codigoInterno})` : 
+      `${productName}`;
+    
     output.innerHTML = `
       <div class="alert alert-info">
         <h5><i class="fas fa-info-circle me-2"></i>Resumen del proceso</h5>
         <ul class="mb-0">
-          <li><strong>Producto creado:</strong> ${nombre} (ID: ${id_product})</li>
+          <li><strong>${actionText}:</strong> ${displayInfo}</li>
+          <li><strong>Modo:</strong> ${mode === 'new' ? 'Crear nuevo producto' : 'Agregar unidades a producto existente'}</li>
           <li><strong>Unidades procesadas:</strong> ${unidades}</li>
           <li><strong>Unidades creadas exitosamente:</strong> ${successCount}</li>
           <li><strong>Unidades con errores:</strong> ${errorCount}</li>
         </ul>
+        ${unitsTable}
       </div>
     `;
 

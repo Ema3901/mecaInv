@@ -3,120 +3,225 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pendientes por Check</title>
+  <title>Pendientes por Check - Sistema de Inventario</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet" />
-  <style>
-    .status-select.buena {
-      background-color: #d4edda;
-      color: #155724;
-      border-color: #c3e6cb;
-    }
-    .status-select.danada {
-      background-color: #f8d7da;
-      color: #721c24;
-      border-color: #f5c6cb;
-    }
-    .alerta-check {
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 1rem;
-      border-radius: 0.375rem;
-      margin-bottom: 1rem;
-      color: #856404;
-      display: none;
-    }
-    #mensajeFinal {
-      display: none;
-    }
-    #mensajeFinal i {
-      font-size: 3rem;
-      color: var(--status-good, #28a745);
-    }
-  </style>
+  <link href="css/pendientes.css" rel="stylesheet" />
 </head>
 <body>
   <div class="dashboard-container">
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
+        <i class="fas fa-boxes"></i>
         Inventario
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="index.html"><i class="fas fa-cubes"></i> Inventario</a></li>
-          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li> 
-          <li><a href="pendientesCheck.html" class="active"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
-          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
-          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> <span>Inventario</span></a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> <span>Desactivados</span></a></li> 
+          <li><a href="pendientesCheck.html" class="active"><i class="fas fa-tasks"></i> <span>Pendientes Check</span></a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> <span>Historial</span></a></li>
+          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> <span>Ocupados</span></a></li>
         </ul>
       </nav>
     </aside>
 
+    <!-- Main Content -->
     <main class="main-content">
-      <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
-        <h1>Pendientes por Revisar</h1>
+      <!-- Header -->
+      <header class="main-header d-flex align-items-center justify-content-between flex-wrap mb-4">
+        <div class="header-title">
+          <h1 class="mb-2">
+            <i class="fas fa-clipboard-check text-primary me-2"></i>
+            Revisión Semestral de Inventario
+          </h1>
+          <p class="text-muted mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            Revisa y aprueba los productos pendientes del inventario
+          </p>
+        </div>
         <div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
           <img src="img/stock.jpg" alt="User Avatar" id="profileDropdown"/>
           <span>Ann Lee</span>
-          <i class="fas fa-chevron-down ml-2"></i>
+          <i class="fas fa-chevron-down dropdown-toggle"></i>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-            <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">Cerrar sesión</a></li>
+            <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">
+              <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+            </a></li>
           </ul>
         </div>
       </header>
 
-      <div class="divider"></div>
-
-      <div id="alertaCheck" class="alerta-check">
-        <strong>¿Seguro que apruebas TODOS los checks?</strong> Esta acción no se puede deshacer.
-        <div class="mt-2 d-flex gap-2">
-          <button class="btn btn-success btn-sm" onclick="confirmarAprobacion()">Sí, aprobar</button>
-          <button class="btn btn-secondary btn-sm" onclick="cancelarAprobacion()">Cancelar</button>
+      <!-- Action Buttons -->
+      <div class="action-buttons mb-4">
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-primary" onclick="location.reload()" title="Actualizar lista">
+            <i class="fas fa-sync-alt me-1"></i>
+            Actualizar
+          </button>
+          <button class="btn btn-outline-success" onclick="generarReporte()" title="Generar reporte de revisión">
+            <i class="fas fa-file-excel me-1"></i>
+            Generar Reporte
+          </button>
+          <button class="btn btn-outline-warning" onclick="iniciarNuevaRevision()" title="Iniciar nueva revisión semestral">
+            <i class="fas fa-refresh me-1"></i>
+            Nueva Revisión
+          </button>
         </div>
       </div>
 
-      <div id="tablaPendientes" class="table-container mt-3">
-        <table id="pendientesTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Artículo</th>
-              <th>Status</th>
-              <th>Check</th>
-              <th>Etiquetado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-          <tfoot>
-            <tr>
-              <td colspan="6" class="text-end">
-                <button class="btn btn-success" onclick="mostrarAdvertencia()">
-                  <i class="fas fa-check-double"></i> Aprobar todo
-                </button>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+      <!-- Stats Cards -->
+      <div class="stats-row mb-4">
+        <div class="stats-card bg-primary">
+          <div class="stats-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="stats-content">
+            <div class="stats-number" id="totalPendientes">0</div>
+            <div class="stats-label">Productos Pendientes</div>
+          </div>
+        </div>
+        <div class="stats-card bg-success">
+          <div class="stats-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stats-content">
+            <div class="stats-number" id="totalAprobados">0</div>
+            <div class="stats-label">Productos Aprobados</div>
+          </div>
+        </div>
+        <div class="stats-card bg-warning">
+          <div class="stats-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stats-content">
+            <div class="stats-number" id="tiempoEstimado">0 min</div>
+            <div class="stats-label">Tiempo Estimado</div>
+          </div>
+        </div>
       </div>
 
-      <div id="mensajeFinal" class="text-center py-5">
-        <i class="fas fa-check-circle mb-3"></i>
-        <h2 class="text-success">Todos los productos han sido revisados,<br>nos vemos la próxima revisión</h2>
-        <a href="index.html" class="btn btn-outline-primary mt-4">
-          <i class="fas fa-arrow-left"></i> Regresar al inventario
-        </a>
+      <!-- Loading Indicator -->
+      <div id="loadingIndicator" class="loading-container">
+        <div class="loading-spinner">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-2 text-muted">Cargando productos pendientes...</p>
+        </div>
+      </div>
+
+      <!-- Tabla de Productos Pendientes -->
+      <div id="tablaPendientes" class="table-container" style="display: none;">
+        <div class="table-header d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">
+            <i class="fas fa-list-ul me-2"></i>
+            Productos Pendientes de Revisión
+          </h5>
+          <div class="table-actions">
+            <button class="btn btn-sm btn-outline-secondary" onclick="toggleSelectAll()" id="selectAllBtn">
+              <i class="fas fa-check-square me-1"></i>
+              Seleccionar Todos
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover" id="pendientesTable">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th width="50">
+                  <input type="checkbox" class="form-check-input" id="masterCheckbox" onchange="toggleSelectAll()">
+                </th>
+                <th width="80">ID</th>
+                <th>Producto</th>
+                <th width="120">Modelo</th>
+                <th width="150">Ubicación</th>
+                <th width="150">Laboratorio</th>
+                <th width="120">Estado</th>
+                <th width="280">Revisión</th>
+                <th width="120">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Los productos se cargarán aquí dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mensaje de Finalización -->
+      <div id="mensajeFinal" class="completion-container" style="display: none;">
+        <div class="completion-card">
+          <div class="completion-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="completion-content">
+            <h2 class="completion-title">¡Revisión Completada!</h2>
+            <p class="completion-text">
+              Excelente trabajo. Todos los productos han sido revisados exitosamente.
+              <br>
+              La próxima revisión está programada para: <span id="nextReviewDate" class="fw-bold text-primary"></span>
+            </p>
+            <div class="completion-actions">
+              <a href="index.html" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>
+                Regresar al Inventario
+              </a>
+              <button class="btn btn-outline-success btn-lg" onclick="generarReporte()">
+                <i class="fas fa-file-alt me-2"></i>
+                Generar Reporte
+              </button>
+              <button class="btn btn-outline-warning btn-lg" onclick="iniciarNuevaRevision()">
+                <i class="fas fa-refresh me-2"></i>
+                Nueva Revisión
+              </button>
+            </div>
+            <div class="completion-stats mt-4">
+              <div class="stat-item">
+                <i class="fas fa-check text-success"></i>
+                <span id="completedStats">0 productos aprobados</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-clock text-info"></i>
+                <span id="timeStats">Completado en tiempo récord</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar (para operaciones masivas) -->
+      <div id="progressContainer" class="progress-container" style="display: none;">
+        <div class="progress-card">
+          <h6 class="mb-3">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            <span id="progressTitle">Procesando productos...</span>
+          </h6>
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 id="progressBar" 
+                 role="progressbar" 
+                 style="width: 0%">
+            </div>
+          </div>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted" id="progressText">Iniciando...</small>
+            <small class="text-muted" id="progressPercent">0%</small>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
-  <!--<script src="js/mobile.js"></script>-->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/pendientes.js"></script>
   <script src="js/logout.js"></script>
   <script src="js/session-manager.js"></script>
-
 </body>
 </html>
