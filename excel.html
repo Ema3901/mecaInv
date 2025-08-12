@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generador de Inventarios Excel</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <!-- SheetJS para Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-green: #1AB192;
+      --primary-green-dark: #09A685;
+      --status-good: #28a745;
+      --status-bad: #dc3545;
+      --status-pending: #ffc107;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      background-color: var(--primary-green);
+      width: 220px;
+      min-height: 100vh;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding-top: 1.5rem;
+      position: sticky;
+      top: 0;
+    }
+    
+    .sidebar .sidebar-header {
+      padding: 0 1.5rem 1rem 1.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .sidebar .sidebar-nav ul {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 1.5rem;
+    }
+    
+    .sidebar .sidebar-nav ul li {
+      margin-bottom: 1rem;
+    }
+    
+    .sidebar .sidebar-nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.4rem 1.5rem;
+      transition: background-color 0.3s;
+      border-radius: 0.375rem;
+    }
+    
+    .sidebar .sidebar-nav ul li a:hover,
+    .sidebar .sidebar-nav ul li a.active {
+      background-color: var(--primary-green-dark);
+      color: white;
+      text-decoration: none;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex-grow: 1;
+      padding: 2rem 3rem;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .main-header {
+      color: #222;
+    }
+    
+    .divider {
+      border-top: 2px solid #ddd;
+      margin: 20px 0;
+    }
+    
+    /* User Box */
+    .user-box {
+      display: flex;
+      align-items: center;
+      background-color: #f8f9fa;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      width: auto;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .user-box:hover {
+      background-color: #e9ecef;
+    }
+    
+    .user-box img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--primary-green);
+      margin-right: 0.75rem;
+    }
+    
+    .user-box span {
+      font-weight: 500;
+      color: #555;
+      margin-right: 0.5rem;
+    }
+    
+    /* Configuration Cards */
+    .config-card {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+      border: 1px solid #e9ecef;
+    }
+    
+    .config-card h5 {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 0.2rem rgba(26, 177, 146, 0.25);
+    }
+    
+    /* Buttons */
+    .btn-primary {
+      background-color: var(--primary-green);
+      border-color: var(--primary-green);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-green-dark);
+      border-color: var(--primary-green-dark);
+    }
+    
+    .btn-success {
+      background-color: var(--status-good);
+      border-color: var(--status-good);
+    }
+    
+    .btn-info {
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    
+    .action-buttons .btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      transition: all 0.3s ease;
+    }
+    
+    .action-buttons .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Status Messages */
+    .status-message {
+      padding: 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      display: none;
+    }
+    
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status-loading {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    /* Preview Table */
+    .preview-container {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+      border: 1px solid #e9ecef;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .preview-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .preview-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+      padding: 0.75rem;
+      border: 1px solid #dee2e6;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    
+    .preview-table td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #dee2e6;
+      font-size: 0.875rem;
+    }
+    
+    .preview-table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    
+    .spinner-border {
+      color: var(--primary-green);
+    }
+    
+    /* Welcome Card */
+    .welcome-card {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    
+    .welcome-card h3 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .welcome-card p {
+      opacity: 0.9;
+      margin-bottom: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1rem 1.5rem;
+      }
+      
+      .sidebar {
+        width: 60px;
+        padding-top: 1rem;
+      }
+      
+      .sidebar .sidebar-header,
+      .sidebar .sidebar-nav ul li a {
+        justify-content: center;
+        padding: 0.5rem;
+      }
+      
+      .sidebar .sidebar-nav ul li a span {
+        display: none;
+      }
+      
+      .user-box span {
+        display: none;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="sidebar-header" title="Menú">
+        <i class="fas fa-file-excel"></i>
+        <span>Excel Export</span>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> <span>Inventario</span></a></li>
+          <li><a href="#" class="active"><i class="fas fa-file-export"></i> <span>Exportar Excel</span></a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> <span>Desactivados</span></a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header d-flex align-items-center justify-content-between flex-wrap">
+        <h1><i class="fas fa-file-excel me-2"></i>Generador de Inventarios Excel</h1>
+        <div class="user-box dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="https://via.placeholder.com/40x40/1AB192/FFFFFF?text=AL" alt="User Avatar" id="profileDropdown"/>
+          <span>Ann Lee</span>
+          <i class="fas fa-chevron-down ml-2"></i>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <li><a class="dropdown-item" href="login.html" onclick="handleLogout()">Cerrar sesión</a></li>
+          </ul>
+        </div>
+      </header>
+
+      <div class="divider"></div>
+
+      <!-- Status Message -->
+      <div id="statusMessage" class="status-message"></div>
+
+      <!-- Welcome Card -->
+      <div class="welcome-card">
+        <h3><i class="fas fa-download me-2"></i>Sistema de Exportación de Inventarios</h3>
+        <p>Genera reportes oficiales de inventarios en formato Excel siguiendo las especificaciones de UTTN</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button type="button" class="btn btn-info btn-lg" onclick="loadAndPreview()">
+          <i class="fas fa-search"></i>
+          Cargar y Previsualizar Datos
+        </button>
+        <button type="button" class="btn btn-success btn-lg" onclick="exportInventoryTools()">
+          <i class="fas fa-tools"></i>
+          Exportar Inventario de Herramientas
+        </button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="exportInventoryEquipment()">
+          <i class="fas fa-laptop"></i>
+          Exportar Inventario de Equipos
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <span class="ms-3">Cargando datos del servidor...</span>
+      </div>
+
+      <!-- Preview Section -->
+      <div id="previewSection" class="preview-container" style="display: none;">
+        <h5 class="mb-3">
+          <i class="fas fa-eye text-primary me-2"></i>Vista previa de datos
+        </h5>
+        <div id="previewContent"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    const API_BASE_URL = 'https://healtyapi.bsite.net';
+    const CURRENT_USER = 'Ann Lee'; // En producción esto vendría de la sesión activa
+    
+    let inventoryData = [];
+    let productUnitsData = [];
+    
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message status-${type}`;
+      statusEl.style.display = 'block';
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          statusEl.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    function showLoading(show) {
+      const spinner = document.getElementById('loadingSpinner');
+      spinner.style.display = show ? 'flex' : 'none';
+    }
+    
+    async function fetchData() {
+      try {
+        showLoading(true);
+        showStatus('Cargando datos del servidor...', 'loading');
+        
+        const inventoryUrl = `${API_BASE_URL}/api/inventories`;
+        const productUnitsUrl = `${API_BASE_URL}/api/product_units`;
+        
+        // Realizar peticiones paralelas
+        const [inventoryResponse, productUnitsResponse] = await Promise.all([
+          fetch(inventoryUrl).catch(() => ({ ok: false })),
+          fetch(productUnitsUrl).catch(() => ({ ok: false }))
+        ]);
+        
+        if (inventoryResponse.ok) {
+          inventoryData = await inventoryResponse.json();
+        } else {
+          inventoryData = [];
+          console.warn('No se pudieron cargar los datos de inventarios');
+        }
+        
+        if (productUnitsResponse.ok) {
+          productUnitsData = await productUnitsResponse.json();
+        } else {
+          productUnitsData = [];
+          console.warn('No se pudieron cargar los datos de unidades de producto');
+        }
+        
+        showLoading(false);
+        showStatus(`✅ Datos cargados exitosamente: ${inventoryData.length} productos, ${productUnitsData.length} unidades`, 'success');
+        return true;
+        
+      } catch (error) {
+        showLoading(false);
+        showStatus(`❌ Error al cargar datos: ${error.message}`, 'error');
+        return false;
+      }
+    }
+    
+    function loadAndPreview() {
+      fetchData().then(success => {
+        if (success) {
+          displayPreview();
+        }
+      });
+    }
+    
+    function displayPreview() {
+      const previewSection = document.getElementById('previewSection');
+      const content = document.getElementById('previewContent');
+      
+      let html = '';
+      
+      if (inventoryData.length > 0) {
+        html += '<div class="mb-4">';
+        html += '<h6 class="text-success"><i class="fas fa-tools me-2"></i>Productos de Inventario (' + inventoryData.length + ' elementos)</h6>';
+        html += '<table class="preview-table table table-striped table-hover">';
+        html += '<thead><tr><th>ID</th><th>Nombre</th><th>Modelo</th><th>Descripción</th><th>Laboratorio</th><th>Categoría</th></tr></thead><tbody>';
+        
+        inventoryData.slice(0, 10).forEach(item => {
+          const categoryName = item.CategoryInfo?.category_name || 'N/A';
+          const labName = 'Sistema'; // Por defecto, se tomará del ProductInfo en las unidades
+          html += `<tr>
+            <td>${item.id_product || 'N/A'}</td>
+            <td><strong>${item.name || 'N/A'}</strong></td>
+            <td>${item.model || 'N/A'}</td>
+            <td>${item.description || 'N/A'}</td>
+            <td>${labName}</td>
+            <td><span class="badge bg-secondary">${categoryName}</span></td>
+          </tr>`;
+        });
+        
+        if (inventoryData.length > 10) {
+          html += `<tr><td colspan="6" class="text-center text-muted"><em>... y ${inventoryData.length - 10} elementos más</em></td></tr>`;
+        }
+        html += '</tbody></table></div>';
+      }
+      
+      if (productUnitsData.length > 0) {
+        html += '<div>';
+        html += '<h6 class="text-primary"><i class="fas fa-laptop me-2"></i>Unidades de Producto (' + productUnitsData.length + ' elementos)</h6>';
+        html += '<table class="preview-table table table-striped table-hover">';
+        html += '<thead><tr><th>ID</th><th>Serie</th><th>Producto</th><th>Estado</th><th>Ubicación</th><th>Laboratorio</th></tr></thead><tbody>';
+        
+        productUnitsData.slice(0, 10).forEach(item => {
+          const productName = item.ProductInfo?.name || 'N/A';
+          const locationName = item.LocationInfo?.location_name || 'N/A';
+          const labName = item.LabInfo?.lab_name || 'N/A';
+          const status = item.Status || 'N/A';
+          
+          let statusClass = 'bg-secondary';
+          if (status.toLowerCase().includes('buena') || status.toLowerCase().includes('activo')) {
+            statusClass = 'bg-success';
+          } else if (status.toLowerCase().includes('mala') || status.toLowerCase().includes('dañad')) {
+            statusClass = 'bg-danger';
+          } else if (status.toLowerCase().includes('pendiente')) {
+            statusClass = 'bg-warning text-dark';
+          }
+          
+          html += `<tr>
+            <td>${item.id_unit || 'N/A'}</td>
+            <td><code>${item.serial_number || 'N/A'}</code></td>
+            <td><strong>${productName}</strong></td>
+            <td><span class="badge ${statusClass}">${status}</span></td>
+            <td>${locationName}</td>
+            <td>${labName}</td>
+          </tr>`;
+        });
+        
+        if (productUnitsData.length > 10) {
+          html += `<tr><td colspan="6" class="text-center text-muted"><em>... y ${productUnitsData.length - 10} elementos más</em></td></tr>`;
+        }
+        html += '</tbody></table></div>';
+      }
+      
+      if (html === '') {
+        html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>No se encontraron datos para mostrar.</div>';
+      }
+      
+      content.innerHTML = html;
+      previewSection.style.display = 'block';
+    }
+    
+    function exportInventoryTools() {
+      if (inventoryData.length === 0) {
+        showStatus('❌ Primero carga los datos usando "Cargar y Previsualizar Datos"', 'error');
+        return;
+      }
+      
+      const fechaElaboracion = new Date().toLocaleDateString('es-MX');
+      const fechaActualizacion = new Date().toLocaleDateString('es-MX');
+      const numeroInventario = `INV-HMI-${new Date().getFullYear()}`;
+      
+      // Crear workbook y worksheet
+      const wb = XLSX.utils.book_new();
+      
+      // Crear los datos con el formato exacto de UTTN
+      const excelData = [];
+      
+      // Encabezado principal con logo UTTN (se agregará después)
+      excelData.push(['UTTN', '', '', '', '', '', '', '', '', '', '', 'inventario de herramientas, materiales e insumos.']);
+      excelData.push([]);
+      
+      // Información del reporte
+      excelData.push(['ELABORADO', CURRENT_USER, '', 'FECHA DE ELABORACION', fechaElaboracion, '', 'FECHA DE ULTIMA ACTUALIZACION', fechaActualizacion, '', 'N.DE', numeroInventario]);
+      excelData.push([]);
+      
+      // Encabezados de la tabla
+      excelData.push([
+        'Numero de item',
+        'Nombre del taller o laboratorio', 
+        'Material/Herramienta/Insumo',
+        'Nombre',
+        'DESCRIPCION',
+        'Marca',
+        'Fabricante',
+        'Codigo de inventario',
+        'Cantidad en existencia',
+        'Especificaciones tecnicas',
+        'Fotografia',
+        'Observaciones'
+      ]);
+      
+      // Datos de inventario
+      inventoryData.forEach((item, index) => {
+        // Determinar tipo basado en categoría
+        let tipo = 'Material';
+        if (item.CategoryInfo?.category_name) {
+          const catName = item.CategoryInfo.category_name.toLowerCase();
+          if (catName.includes('herramienta')) tipo = 'Herramienta';
+          else if (catName.includes('insumo')) tipo = 'Insumo';
+        }
+        
+        const marca = item.BrandInfo?.brand_name || 'N/A';
+        const laboratorio = 'Laboratorio General'; // Se podría obtener de otra fuente
+        
+        excelData.push([
+          index + 1,
+          laboratorio,
+          tipo,
+          item.name || 'N/A',
+          item.description || 'N/A',
+          marca,
+          'N/A', // Fabricante no disponible
+          item.id_product || 'N/A',
+          item.TotalUnits || '1',
+          item.specs || 'N/A',
+          'N/A', // Fotografía
+          'N/A'  // Observaciones
+        ]);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      
+      // Configurar anchos de columna para que se vea como el formato original
+      ws['!cols'] = [
+        {wch: 10}, // Numero de item
+        {wch: 25}, // Nombre del taller
+        {wch: 20}, // Tipo
+        {wch: 25}, // Nombre
+        {wch: 35}, // Descripcion
+        {wch: 15}, // Marca
+        {wch: 15}, // Fabricante
+        {wch: 15}, // Codigo
+        {wch: 12}, // Cantidad
+        {wch: 30}, // Especificaciones
+        {wch: 10}, // Fotografia
+        {wch: 25}  // Observaciones
+      ];
+      
+      // Merge cells para el encabezado principal
+      ws['!merges'] = [
+        {s: {r: 0, c: 0}, e: {r: 0, c: 10}}, // Merge para "UTTN"
+        {s: {r: 0, c: 11}, e: {r: 0, c: 11}} // "inventario de herramientas..."
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventario Herramientas');
+      
+      // Generar archivo
+      const filename = `Inventario_Herramientas_Materiales_Insumos_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      
+      showStatus(`✅ Excel generado exitosamente: ${filename}`, 'success');
+    }
+    
+    function exportInventoryEquipment() {
+      if (productUnitsData.length === 0) {
+        showStatus('❌ Primero carga los datos usando "Cargar y Previsualizar Datos"', 'error');
+        return;
+      }
+      
+      const fechaElaboracion = new Date().toLocaleDateString('es-MX');
+      const fechaActualizacion = new Date().toLocaleDateString('es-MX');
+      const numeroInventario = `INV-TL-${new Date().getFullYear()}`;
+      
+      const wb = XLSX.utils.book_new();
+      const excelData = [];
+      
+      // Encabezado principal
+      excelData.push(['UTTN', '', '', '', '', '', '', '', '', '', '', '', 'inventario de talleres y laboratorios']);
+      excelData.push([]);
+      
+      // Información del reporte
+      excelData.push(['Elaborado', CURRENT_USER, '', 'Fecha de elaboracion', fechaElaboracion, '', 'Fecha de ultima actualizacion', fechaActualizacion, '', 'N.DE', numeroInventario]);
+      excelData.push([]);
+      
+      // Encabezados de la tabla
+      excelData.push([
+        'Numero de item',
+        'Nombre del taller o laboratorio',
+        'Nombre del equipo',
+        'Cantidad en existencia',
+        'Modelo',
+        'Marca',
+        'Fabricante',
+        'Codigo de inventario',
+        'Numero de serie',
+        'Especificaciones tecnicas',
+        'Fotografia',
+        'Ubicacion del equipo',
+        'Observaciones'
+      ]);
+      
+      // Datos de equipos - cada unidad individual
+      let itemNumber = 1;
+      productUnitsData.forEach(unit => {
+        const productName = unit.ProductInfo?.name || 'Equipo sin nombre';
+        const productModel = unit.ProductInfo?.model || 'N/A';
+        const productSpecs = unit.ProductInfo?.specs || 'N/A';
+        const productId = unit.ProductInfo?.id_product || 'N/A';
+        const locationName = unit.LocationInfo?.location_name || 'N/A';
+        const labName = unit.LabInfo?.lab_name || 'Laboratorio General';
+        
+        excelData.push([
+          itemNumber++,
+          labName,
+          productName,
+          '1', // Una unidad por fila
+          productModel,
+          'N/A', // Marca no disponible en estructura actual
+          'N/A', // Fabricante
+          productId,
+          unit.serial_number || 'N/A',
+          productSpecs,
+          'N/A', // Fotografía
+          locationName,
+          unit.observations || 'N/A'
+        ]);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      
+      // Configurar anchos de columna
+      ws['!cols'] = [
+        {wch: 10}, {wch: 25}, {wch: 25}, {wch: 12}, {wch: 15}, 
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 30}, 
+        {wch: 10}, {wch: 20}, {wch: 25}
+      ];
+      
+      // Merge cells para el encabezado
+      ws['!merges'] = [
+        {s: {r: 0, c: 0}, e: {r: 0, c: 11}}, // Merge para "UTTN"
+        {s: {r: 0, c: 12}, e: {r: 0, c: 12}} // "inventario de talleres..."
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventario Equipos');
+      
+      const filename = `Inventario_Talleres_Laboratorios_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      
+      showStatus(`✅ Excel generado exitosamente: ${filename}`, 'success');
+    }
+    
+    function handleLogout() {
+      console.log('Cerrando sesión...');
+    }
+    
+    // Auto-cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      // Comentar la siguiente línea para cargar automáticamente al inicio
+      // loadAndPreview();
+    });
+  </script>
+</body>
+</html>

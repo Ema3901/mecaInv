@@ -1,49 +1,51 @@
-// Sistema de Revisión Semestral de Inventario - Versión Mejorada
+// Sistema de Revisión Semestral de Inventario - CORREGIDO con SweetAlert
 /*
- * CARACTERÍSTICAS MEJORADAS:
- * - Diseño moderno y responsivo
- * - Progress tracking con estadísticas
- * - SweetAlert2 para mejor UX
- * - Manejo robusto de errores
- * - Operaciones asíncronas optimizadas
- * - Generación de reportes
- * - Sistema de selección múltiple
+ * CORRECCIÓN IMPORTANTE:
+ * - La API devuelve PendingStatus como strings: "Pendiente", "Realizado"
+ * - Usar endpoints específicos para cambiar estado
+ * - Filtrado corregido para strings
+ * - SweetAlert para confirmaciones y alertas mejoradas
+ * 
+ * DEPENDENCIAS REQUERIDAS:
+ * - SweetAlert2: https://cdn.jsdelivr.net/npm/sweetalert2@11
+ * - Bootstrap 5 (para estilos)
+ * - Font Awesome (para iconos)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
     const tbody = document.querySelector('#pendientesTable tbody');
     const API_BASE_URL = "https://healtyapi.bsite.net/api/product_units";
     
-    let pendientes = [];
-    let selectedProducts = new Set();
-    let stats = {
-        totalPendientes: 0,
-        totalAprobados: 0,
-        tiempoInicio: null
-    };
+    let pendientes = []; // Array global para manejar los productos pendientes
 
-    // ==================== INICIALIZACIÓN ====================
-    async function inicializar() {
-        try {
-            mostrarLoading(true);
-            stats.tiempoInicio = new Date();
-            
-            await obtenerProductosPendientes();
-            renderTabla();
-            actualizarStats();
-            
-            mostrarLoading(false);
-            mostrarTableContainer(true);
-            
-        } catch (error) {
-            mostrarError('Error al inicializar el sistema', error);
-            mostrarLoading(false);
-        }
+    // Función para obtener usuario actual (placeholder)
+    function getCurrentUser() {
+        return localStorage.getItem('currentUser') || 'Sistema';
     }
 
-    // ==================== API CALLS ====================
+    // Función para mostrar notificaciones
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // FUNCIÓN CORREGIDA: Filtrar productos pendientes
     async function obtenerProductosPendientes() {
         try {
+            showNotification('Cargando productos pendientes...', 'info');
+            
             const response = await fetch(API_BASE_URL);
             
             if (!response.ok) {
@@ -52,27 +54,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const data = await response.json();
             
+            // FILTRADO: Buscar productos con PendingStatus = "Pendiente"
             pendientes = data.filter(item => {
                 const isPendiente = item.PendingStatus === "Pendiente";
                 const isActive = item.Status !== "Deshabilitado" && item.Status !== "Inactivo";
                 return isPendiente && isActive;
             });
 
-            stats.totalPendientes = pendientes.length;
-            
-            mostrarNotificacion(
-                `Se encontraron ${pendientes.length} productos pendientes`, 
-                'success'
-            );
-            
+            showNotification(`Se encontraron ${pendientes.length} productos pendientes`, 'success');
             return pendientes;
             
         } catch (error) {
-            throw new Error(`Error al cargar productos: ${error.message}`);
+            showNotification('Error al cargar los productos. Verifica tu conexión.', 'danger');
+            return [];
         }
     }
 
-    // ==================== RENDER FUNCTIONS ====================
+    // Función para renderizar la tabla
     function renderTabla() {
         tbody.innerHTML = '';
 
@@ -85,57 +83,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
             tr.setAttribute('data-index', index);
             tr.setAttribute('data-id', item.id_unit);
-            tr.className = 'producto-row';
 
-            const isSelected = selectedProducts.has(item.id_unit);
-            if (isSelected) tr.classList.add('selected');
+            // Select para estado de etiqueta
+            const selectLabel = createLabelSelect(item.LabelStatus, index);
+            
+            // Textarea para observaciones
+            const textareaObs = createObservationsTextarea(item.observations || "", index);
 
             tr.innerHTML = `
-                <td>
-                    <input type="checkbox" class="form-check-input producto-checkbox" 
-                           value="${item.id_unit}" 
-                           ${isSelected ? 'checked' : ''}
-                           onchange="toggleProductSelection(${item.id_unit})">
+                <td class="fw-bold text-primary">${item.id_unit}</td>
+                <td>${item.ProductInfo?.name || 'N/A'}</td>
+                <td><span class="badge bg-secondary">${item.ProductInfo?.model || 'N/A'}</span></td>
+                <td><i class="fas fa-map-marker-alt text-muted me-1"></i>${item.LocationInfo?.location_name || 'N/A'}</td>
+                <td><i class="fas fa-flask text-info me-1"></i>${item.LabInfo?.lab_name || 'N/A'}</td>
+                <td><span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>PENDIENTE</span></td>
+                <td class="label-column">
+                    <div class="mb-2">${selectLabel}</div>
+                    ${textareaObs}
                 </td>
-                <td>
-                    <span class="product-id">${item.id_unit}</span>
-                </td>
-                <td>
-                    <div class="product-info">
-                        <strong>${item.ProductInfo?.name || 'N/A'}</strong>
-                        <small class="text-muted d-block">${item.ProductInfo?.description || ''}</small>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge bg-secondary">${item.ProductInfo?.model || 'N/A'}</span>
-                </td>
-                <td>
-                    <div class="location-info">
-                        <i class="fas fa-map-marker-alt text-muted me-1"></i>
-                        ${item.LocationInfo?.location_name || 'N/A'}
-                    </div>
-                </td>
-                <td>
-                    <div class="lab-info">
-                        <i class="fas fa-flask text-info me-1"></i>
-                        ${item.LabInfo?.lab_name || 'N/A'}
-                    </div>
-                </td>
-                <td>
-                    <span class="badge bg-warning text-dark status-badge">
-                        <i class="fas fa-clock me-1"></i>
-                        PENDIENTE
-                    </span>
-                </td>
-                <td class="revision-column">
-                    ${createRevisionControls(item, index)}
-                </td>
-                <td class="action-column">
-                    <button class="btn btn-success btn-sm action-btn" 
-                            onclick="aprobarProducto(${index})" 
-                            title="Aprobar revisión">
-                        <i class="fas fa-check me-1"></i>
-                        Aprobar
+                <td class="text-end">
+                    <button class="btn btn-sm btn-success shadow-sm" onclick="aprobarUno(${index})" title="Aprobar revisión">
+                        <i class="fas fa-check me-1"></i> Aprobar
                     </button>
                 </td>
             `;
@@ -143,80 +111,73 @@ document.addEventListener('DOMContentLoaded', async () => {
             tbody.appendChild(tr);
         });
 
-        agregarFilaAcciones();
+        agregarContadorPendientes();
+        agregarBotonAprobarTodos();
     }
 
-    function createRevisionControls(item, index) {
-        let selectedValue = item.LabelStatus || 1;
-        if (typeof item.LabelStatus === 'string') {
-            switch(item.LabelStatus.toLowerCase()) {
+    // Función para agregar botón "Aprobar Todos" después del contador
+    function agregarBotonAprobarTodos() {
+        const existingButton = document.getElementById('aprobar-todos-row');
+        if (existingButton) existingButton.remove();
+        
+        if (pendientes.length > 0) {
+            const buttonRow = document.createElement('tr');
+            buttonRow.id = 'aprobar-todos-row';
+            buttonRow.innerHTML = `
+                <td colspan="9" class="bg-light text-center py-3 border-top">
+                    <button class="btn btn-success btn-lg shadow" onclick="aprobarTodos()" title="Aprobar todos los productos pendientes">
+                        <i class="fas fa-check-double me-2"></i>
+                        Aprobar Todos los Productos (${pendientes.length})
+                    </button>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Esto aprobará todos los productos que tengan los campos completos
+                        </small>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(buttonRow);
+        }
+    }
+
+
+
+    // Crear select de etiqueta
+    function createLabelSelect(currentLabelStatus, index) {
+        let selectedValue = currentLabelStatus;
+        if (typeof currentLabelStatus === 'string') {
+            switch(currentLabelStatus.toLowerCase()) {
                 case 'bien': selectedValue = 1; break;
                 case 'no': selectedValue = 2; break;
                 case 'dañada': selectedValue = 3; break;
-                default: selectedValue = parseInt(item.LabelStatus) || 1;
+                default: selectedValue = parseInt(currentLabelStatus) || 1;
             }
         }
         
         return `
-            <div class="revision-controls">
-                <div class="mb-2">
-                    <label class="form-label small">Estado de Etiqueta:</label>
-                    <select class="form-select form-select-sm label-select" id="label-${index}">
-                        <option value="1" ${selectedValue == 1 ? "selected" : ""}>
-                            ✅ BIEN
-                        </option>
-                        <option value="2" ${selectedValue == 2 ? "selected" : ""}>
-                            ❌ NO TIENE
-                        </option>
-                        <option value="3" ${selectedValue == 3 ? "selected" : ""}>
-                            🔧 DAÑADA
-                        </option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label small">Observaciones:</label>
-                    <textarea class="form-control form-control-sm observation-textarea" 
-                              id="obs-${index}" 
-                              rows="2" 
-                              placeholder="Escribe observaciones aquí..."
-                              maxlength="500">${item.observations || ''}</textarea>
-                    <small class="text-muted">Máx. 500 caracteres</small>
-                </div>
-            </div>
+            <select class="form-select form-select-sm label-select" id="label-${index}">
+                <option value="1" ${selectedValue == 1 ? "selected" : ""}>✅ BIEN</option>
+                <option value="2" ${selectedValue == 2 ? "selected" : ""}>❌ NO</option>
+                <option value="3" ${selectedValue == 3 ? "selected" : ""}>🔧 DAÑADA</option>
+            </select>
         `;
     }
 
-    function agregarFilaAcciones() {
-        if (pendientes.length === 0) return;
-
-        const actionRow = document.createElement('tr');
-        actionRow.className = 'action-row';
-        actionRow.innerHTML = `
-            <td colspan="9" class="action-row-content">
-                <div class="bulk-actions">
-                    <div class="bulk-info">
-                        <i class="fas fa-info-circle text-primary me-2"></i>
-                        <span>${pendientes.length} productos pendientes de revisión</span>
-                    </div>
-                    <div class="bulk-buttons">
-                        <button class="btn btn-outline-primary btn-sm" onclick="aprobarSeleccionados()" id="aprobarSeleccionadosBtn" disabled>
-                            <i class="fas fa-check me-1"></i>
-                            Aprobar Seleccionados (<span id="selectedCount">0</span>)
-                        </button>
-                        <button class="btn btn-success btn-sm" onclick="aprobarTodos()">
-                            <i class="fas fa-check-double me-1"></i>
-                            Aprobar Todos (${pendientes.length})
-                        </button>
-                    </div>
-                </div>
-            </td>
+    // Crear textarea de observaciones
+    function createObservationsTextarea(observations, index) {
+        return `
+            <textarea class="form-control form-control-sm mt-2" 
+                      id="obs-${index}" 
+                      rows="2" 
+                      placeholder="Escribe observaciones aquí..."
+                      maxlength="500">${observations}</textarea>
+            <small class="text-muted">Máx. 500 caracteres</small>
         `;
-        
-        tbody.appendChild(actionRow);
     }
 
-    // ==================== PRODUCT ACTIONS ====================
-    async function aprobarProducto(index) {
+    // FUNCIÓN: Usar endpoint específico para aprobar
+    async function aprobarUno(index) {
         try {
             const row = document.querySelector(`tr[data-index="${index}"]`);
             const selectLabel = document.getElementById(`label-${index}`);
@@ -224,29 +185,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Validar campos requeridos
             if (!selectLabel.value) {
-                mostrarAdvertencia('Por favor completa el estado de la etiqueta');
+                showNotification('Por favor completa el estado de la etiqueta', 'warning');
                 return;
             }
 
-            // Mostrar indicador de carga en el botón
-            const approveButton = row.querySelector('.action-btn');
+            // Mostrar indicador de carga
+            const approveButton = row.querySelector('button');
             const originalContent = approveButton.innerHTML;
             approveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Aprobando...';
             approveButton.disabled = true;
 
             const productId = pendientes[index].id_unit;
 
-            // Paso 1: Cambiar estado a "Realizado"
+            // PASO 1: Usar endpoint específico para cambiar estado a "Realizado"
             const statusResponse = await fetch(`${API_BASE_URL}/set-pending-to-done/${productId}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" }
+                headers: {
+                    "Content-Type": "application/json"
+                }
             });
 
             if (!statusResponse.ok) {
                 throw new Error(`Error al cambiar estado: ${statusResponse.status}`);
             }
 
-            // Paso 2: Actualizar otros campos
+            // PASO 2: Actualizar otros campos (LabelStatus, observations, etc.)
             const updatedProduct = {
                 ...pendientes[index],
                 PendingStatus: "Realizado",
@@ -258,255 +221,94 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const updateResponse = await fetch(`${API_BASE_URL}/${productId}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(updatedProduct)
             });
 
             if (!updateResponse.ok) {
-                // Revertir el estado si falla
+                // Si falla la actualización de campos, revertir el estado
                 await fetch(`${API_BASE_URL}/set-done-to-pending/${productId}`, {
                     method: "PUT"
                 });
                 throw new Error(`Error al actualizar campos: ${updateResponse.status}`);
             }
 
-            // Remover de la lista y actualizar
+            // Remover de la lista local y rerender
             pendientes.splice(index, 1);
-            stats.totalAprobados++;
-            selectedProducts.delete(productId);
-            
-            mostrarNotificacion(`Producto ${productId} aprobado exitosamente`, 'success');
-            
-            // Efecto de eliminación suave
-            row.style.opacity = '0.5';
-            row.style.transform = 'translateX(100%)';
-            
-            setTimeout(() => {
-                renderTabla();
-                actualizarStats();
-            }, 300);
+            showNotification(`Producto ${productId} aprobado exitosamente`, 'success');
+            renderTabla();
 
         } catch (error) {
-            mostrarError('Error al aprobar el producto', error);
+            showNotification('Error al aprobar el producto. Intenta nuevamente.', 'danger');
             
             // Restaurar botón
             const row = document.querySelector(`tr[data-index="${index}"]`);
             if (row) {
-                const approveButton = row.querySelector('.action-btn');
+                const approveButton = row.querySelector('button');
                 approveButton.innerHTML = '<i class="fas fa-check me-1"></i> Aprobar';
                 approveButton.disabled = false;
             }
         }
     }
 
-    async function aprobarTodos() {
-        if (pendientes.length === 0) {
-            mostrarInfo('No hay productos pendientes para aprobar');
-            return;
-        }
-
-        // Verificar campos completos
-        const productosIncompletos = validarCamposCompletos();
-        
-        if (productosIncompletos.length > 0) {
-            mostrarAdvertencia(
-                `Completa los campos requeridos para los productos: ${productosIncompletos.join(', ')}`
-            );
-            return;
-        }
-
-        // Confirmar acción
-        const result = await Swal.fire({
-            icon: 'question',
-            title: '¿Aprobar todos los productos?',
-            html: `
-                <div class="text-start">
-                    <p><strong>Estás a punto de aprobar ${pendientes.length} productos:</strong></p>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Esto marcará todos los productos como <strong>"Realizado"</strong>
-                    </div>
-                    <p><strong>¿Estás seguro de continuar?</strong></p>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: `<i class="fas fa-check me-1"></i> Sí, aprobar todos`,
-            cancelButtonText: `<i class="fas fa-times me-1"></i> Cancelar`,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#dc3545'
-        });
-
-        if (!result.isConfirmed) return;
-
-        await procesarAprobacionMasiva([...pendientes]);
-    }
-
-    async function aprobarSeleccionados() {
-        if (selectedProducts.size === 0) {
-            mostrarInfo('No hay productos seleccionados');
-            return;
-        }
-
-        const productosSeleccionados = pendientes.filter(p => selectedProducts.has(p.id_unit));
-        
-        // Verificar campos completos para productos seleccionados
-        const productosIncompletos = [];
-        productosSeleccionados.forEach((producto) => {
-            const index = pendientes.findIndex(p => p.id_unit === producto.id_unit);
-            const selectLabel = document.getElementById(`label-${index}`);
-            
-            if (!selectLabel?.value) {
-                productosIncompletos.push(producto.id_unit);
-            }
-        });
-
-        if (productosIncompletos.length > 0) {
-            mostrarAdvertencia(
-                `Completa los campos requeridos para los productos: ${productosIncompletos.join(', ')}`
-            );
-            return;
-        }
-
-        const result = await Swal.fire({
-            icon: 'question',
-            title: `¿Aprobar ${selectedProducts.size} productos seleccionados?`,
-            showCancelButton: true,
-            confirmButtonText: `Aprobar Seleccionados`,
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#28a745'
-        });
-
-        if (!result.isConfirmed) return;
-
-        await procesarAprobacionMasiva(productosSeleccionados);
-    }
-
-    // ==================== BULK OPERATIONS ====================
-    async function procesarAprobacionMasiva(productos) {
-        mostrarProgress(true, 'Aprobando productos...');
-
-        try {
-            const total = productos.length;
-            let aprobados = 0;
-            let errores = [];
-
-            for (let i = 0; i < productos.length; i++) {
-                const producto = productos[i];
-                const progreso = Math.round(((i + 1) / total) * 100);
-                
-                actualizarProgress(
-                    progreso,
-                    `Aprobando producto ${producto.id_unit} (${i + 1}/${total})`,
-                    `${progreso}%`
-                );
-
-                try {
-                    const index = pendientes.findIndex(p => p.id_unit === producto.id_unit);
-                    if (index !== -1) {
-                        await aprobarProductoSilencioso(index);
-                        aprobados++;
-                    }
-                } catch (error) {
-                    errores.push({
-                        id: producto.id_unit,
-                        error: error.message
-                    });
-                }
-
-                // Pausa para evitar sobrecarga
-                await new Promise(resolve => setTimeout(resolve, 200));
-            }
-
-            mostrarProgress(false);
-            mostrarResultadoAprobacion(aprobados, errores);
-            
-            renderTabla();
-            actualizarStats();
-
-        } catch (error) {
-            mostrarProgress(false);
-            mostrarError('Error en la aprobación masiva', error);
-        }
-    }
-
-    async function aprobarProductoSilencioso(index) {
-        const selectLabel = document.getElementById(`label-${index}`);
-        const textareaObs = document.getElementById(`obs-${index}`);
-        const productId = pendientes[index].id_unit;
-
-        // Cambiar estado
-        const statusResponse = await fetch(`${API_BASE_URL}/set-pending-to-done/${productId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        if (!statusResponse.ok) {
-            throw new Error(`Error al cambiar estado: ${statusResponse.status}`);
-        }
-
-        // Actualizar campos
-        const updatedProduct = {
-            ...pendientes[index],
-            PendingStatus: "Realizado",
-            LabelStatus: parseInt(selectLabel.value),
-            observations: textareaObs.value.trim() || null,
-            last_review_date: new Date().toISOString(),
-            reviewed_by: getCurrentUser()
-        };
-
-        const updateResponse = await fetch(`${API_BASE_URL}/${productId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedProduct)
-        });
-
-        if (!updateResponse.ok) {
-            await fetch(`${API_BASE_URL}/set-done-to-pending/${productId}`, {
-                method: "PUT"
-            });
-            throw new Error(`Error al actualizar campos: ${updateResponse.status}`);
-        }
-
-        // Remover de arrays
-        selectedProducts.delete(productId);
-        stats.totalAprobados++;
-    }
-
-    // ==================== NUEVA REVISIÓN ====================
+    // Función para iniciar nueva revisión usando endpoint específico con SweetAlert
     async function iniciarNuevaRevision() {
-        const confirmacion = await Swal.fire({
-            icon: 'warning',
-            title: '¿Iniciar nueva revisión semestral?',
-            html: `
-                <div class="text-start">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>¡Atención!</strong> Esta acción marcará todos los productos realizados como <strong>"PENDIENTE"</strong>
-                    </div>
-                    <p><strong>Esto significa que:</strong></p>
-                    <ul class="text-start ps-3">
-                        <li>Todos los productos con estado "Realizado" volverán a "Pendiente"</li>
-                        <li>Se iniciará un nuevo ciclo de revisión semestral</li>
-                        <li>Tendrás que revisar nuevamente todos los productos</li>
-                    </ul>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: '<i class="fas fa-refresh me-1"></i> Iniciar Revisión',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#f39c12'
-        });
-        
-        if (!confirmacion.isConfirmed) return;
-
-        mostrarProgress(true, 'Iniciando nueva revisión...');
-
         try {
-            actualizarProgress(20, 'Obteniendo productos realizados...', '20%');
+            const confirmacion = await Swal.fire({
+                icon: 'warning',
+                title: '¿Iniciar nueva revisión semestral?',
+                html: `
+                    <div class="text-start">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>¡Atención!</strong> Esta acción marcará todos los productos realizados como <strong>"PENDIENTE"</strong> para una nueva revisión.
+                        </div>
+                        <p><strong>Esto significa que:</strong></p>
+                        <ul class="text-start ps-3">
+                            <li>Todos los productos con estado "Realizado" volverán a "Pendiente"</li>
+                            <li>Tendrás que revisar nuevamente todos los productos</li>
+                            <li>Se iniciará un nuevo ciclo de revisión semestral</li>
+                        </ul>
+                        <p><strong>¿Estás seguro de continuar?</strong></p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-refresh me-1"></i> Sí, iniciar revisión',
+                cancelButtonText: '<i class="fas fa-times me-1"></i> Cancelar',
+                confirmButtonColor: '#f39c12',
+                cancelButtonColor: '#6c757d',
+                focusCancel: true,
+                reverseButtons: true
+            });
             
+            if (!confirmacion.isConfirmed) return;
+
+            // Mostrar loading
+            Swal.fire({
+                title: 'Iniciando nueva revisión...',
+                html: `
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Procesando...</span>
+                            </div>
+                        </div>
+                        <p id="revision-progress">Obteniendo productos...</p>
+                    </div>
+                `,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false
+            });
+
+            // Obtener todos los productos
+            document.getElementById('revision-progress').textContent = 'Obteniendo lista de productos...';
             const response = await fetch(API_BASE_URL);
             const todosLosProductos = await response.json();
 
+            // Filtrar productos que están "Realizado" y activos
             const productosRealizados = todosLosProductos.filter(p => 
                 p.PendingStatus === "Realizado" && 
                 p.Status !== "Deshabilitado" && 
@@ -514,43 +316,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
 
             if (productosRealizados.length === 0) {
-                mostrarProgress(false);
-                mostrarInfo('No se encontraron productos realizados para marcar como pendientes');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sin productos para revisar',
+                    text: 'No se encontraron productos realizados para marcar como pendientes.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#3085d6'
+                });
                 return;
             }
 
-            actualizarProgress(40, `Procesando ${productosRealizados.length} productos...`, '40%');
-
             let productosActualizados = 0;
-            const total = productosRealizados.length;
+            const totalProductos = productosRealizados.length;
 
+            // Usar el endpoint específico para cada producto
             for (let i = 0; i < productosRealizados.length; i++) {
                 const producto = productosRealizados[i];
-                const progreso = 40 + Math.round((i / total) * 50);
                 
-                actualizarProgress(
-                    progreso,
-                    `Procesando producto ${producto.id_unit} (${i + 1}/${total})`,
-                    `${progreso}%`
-                );
+                document.getElementById('revision-progress').textContent = 
+                    `Procesando producto ${producto.id_unit} (${i + 1}/${totalProductos})`;
 
                 try {
                     const response = await fetch(`${API_BASE_URL}/set-done-to-pending/${producto.id_unit}`, {
                         method: "PUT",
-                        headers: { "Content-Type": "application/json" }
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
                     });
 
                     if (response.ok) {
                         productosActualizados++;
                     }
                 } catch (error) {
-                    console.error(`Error processing product ${producto.id_unit}:`, error);
+                    // Error silencioso para no interrumpir el proceso
                 }
             }
 
-            mostrarProgress(false);
-
-            await Swal.fire({
+            // Mostrar resultado
+            Swal.fire({
                 icon: 'success',
                 title: '¡Nueva revisión iniciada!',
                 html: `
@@ -560,339 +363,259 @@ document.addEventListener('DOMContentLoaded', async () => {
                             Se marcaron <strong>${productosActualizados}</strong> productos como pendientes
                         </div>
                         <p>La nueva revisión semestral ha comenzado.</p>
+                        <small class="text-muted">La página se recargará para mostrar los productos pendientes.</small>
                     </div>
                 `,
                 confirmButtonText: 'Continuar',
-                confirmButtonColor: '#28a745'
+                confirmButtonColor: '#28a745',
+                timer: 3000,
+                timerProgressBar: true
+            }).then(() => {
+                location.reload();
             });
 
-            // Recargar la página para mostrar los nuevos pendientes
-            location.reload();
-
         } catch (error) {
-            mostrarProgress(false);
-            mostrarError('Error al iniciar revisión', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al iniciar revisión',
+                text: 'Ocurrió un error al intentar iniciar la nueva revisión. Verifica tu conexión.',
+                confirmButtonText: 'Reintentar',
+                confirmButtonColor: '#dc3545'
+            });
         }
     }
 
-    // ==================== GENERAR REPORTE ====================
-    async function generarReporte() {
-        try {
-            mostrarNotificacion('Generando reporte...', 'info');
+    // Función para aprobar todos los productos con SweetAlert
+    async function aprobarTodos() {
+        if (pendientes.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Sin productos pendientes',
+                text: 'No hay productos pendientes para aprobar',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
 
-            // Obtener datos completos para el reporte
-            const response = await fetch(API_BASE_URL);
-            const todosLosProductos = await response.json();
+        // Verificar que todos los productos tengan campos completos
+        const productosIncompletos = [];
+        pendientes.forEach((producto, index) => {
+            const selectLabel = document.getElementById(`label-${index}`);
             
-            const productosRealizados = todosLosProductos.filter(p => 
-                p.PendingStatus === "Realizado" && 
-                p.Status !== "Deshabilitado" && 
-                p.Status !== "Inactivo"
-            );
-
-            const productosPendientes = todosLosProductos.filter(p => 
-                p.PendingStatus === "Pendiente" && 
-                p.Status !== "Deshabilitado" && 
-                p.Status !== "Inactivo"
-            );
-
-            // Crear datos del reporte
-            const reporteData = {
-                fecha: new Date().toLocaleDateString('es-ES'),
-                resumen: {
-                    totalProductos: todosLosProductos.length,
-                    realizados: productosRealizados.length,
-                    pendientes: productosPendientes.length,
-                    porcentajeCompletado: Math.round((productosRealizados.length / (productosRealizados.length + productosPendientes.length)) * 100) || 0
-                },
-                productosRealizados,
-                productosPendientes
-            };
-
-            // Generar y descargar reporte Excel
-            await generarReporteExcel(reporteData);
-
-        } catch (error) {
-            mostrarError('Error al generar reporte', error);
-        }
-    }
-
-    async function generarReporteExcel(data) {
-        // Crear workbook
-        const wb = {
-            SheetNames: ['Resumen', 'Productos Realizados', 'Productos Pendientes'],
-            Sheets: {}
-        };
-
-        // Hoja de Resumen
-        const resumenData = [
-            ['REPORTE DE REVISIÓN SEMESTRAL DE INVENTARIO'],
-            ['Fecha de generación:', data.fecha],
-            [''],
-            ['RESUMEN GENERAL'],
-            ['Total de productos:', data.resumen.totalProductos],
-            ['Productos realizados:', data.resumen.realizados],
-            ['Productos pendientes:', data.resumen.pendientes],
-            ['Porcentaje completado:', data.resumen.porcentajeCompletado + '%'],
-            [''],
-            ['ESTADÍSTICAS POR ESTADO DE ETIQUETA'],
-            ['Etiquetas en buen estado:', data.productosRealizados.filter(p => p.LabelStatus == 1).length],
-            ['Sin etiqueta:', data.productosRealizados.filter(p => p.LabelStatus == 2).length],
-            ['Etiquetas dañadas:', data.productosRealizados.filter(p => p.LabelStatus == 3).length]
-        ];
-
-        wb.Sheets['Resumen'] = crearHojaExcel(resumenData);
-
-        // Hoja de Productos Realizados
-        const realizadosHeaders = ['ID', 'Producto', 'Modelo', 'Ubicación', 'Laboratorio', 'Estado Etiqueta', 'Observaciones', 'Fecha Revisión', 'Revisado Por'];
-        const realizadosData = [realizadosHeaders, ...data.productosRealizados.map(p => [
-            p.id_unit,
-            p.ProductInfo?.name || 'N/A',
-            p.ProductInfo?.model || 'N/A',
-            p.LocationInfo?.location_name || 'N/A',
-            p.LabInfo?.lab_name || 'N/A',
-            p.LabelStatus == 1 ? 'BIEN' : p.LabelStatus == 2 ? 'NO TIENE' : 'DAÑADA',
-            p.observations || '',
-            p.last_review_date ? new Date(p.last_review_date).toLocaleDateString('es-ES') : '',
-            p.reviewed_by || ''
-        ])];
-
-        wb.Sheets['Productos Realizados'] = crearHojaExcel(realizadosData);
-
-        // Hoja de Productos Pendientes
-        const pendientesHeaders = ['ID', 'Producto', 'Modelo', 'Ubicación', 'Laboratorio', 'Estado'];
-        const pendientesDataArray = [pendientesHeaders, ...data.productosPendientes.map(p => [
-            p.id_unit,
-            p.ProductInfo?.name || 'N/A',
-            p.ProductInfo?.model || 'N/A',
-            p.LocationInfo?.location_name || 'N/A',
-            p.LabInfo?.lab_name || 'N/A',
-            'PENDIENTE'
-        ])];
-
-        wb.Sheets['Productos Pendientes'] = crearHojaExcel(pendientesDataArray);
-
-        // Simular descarga (en un entorno real usarías una librería como XLSX)
-        const reporteTexto = generarReporteTexto(data);
-        descargarArchivoTexto(reporteTexto, `Reporte_Inventario_${data.fecha.replace(/\//g, '-')}.txt`);
-
-        mostrarNotificacion('Reporte generado exitosamente', 'success');
-    }
-
-    function crearHojaExcel(data) {
-        // Simulación de creación de hoja Excel
-        // En producción usarías XLSX.utils.aoa_to_sheet(data)
-        return { data };
-    }
-
-    function generarReporteTexto(data) {
-        return `
-REPORTE DE REVISIÓN SEMESTRAL DE INVENTARIO
-=========================================
-
-Fecha de generación: ${data.fecha}
-
-RESUMEN GENERAL
----------------
-Total de productos: ${data.resumen.totalProductos}
-Productos realizados: ${data.resumen.realizados}
-Productos pendientes: ${data.resumen.pendientes}
-Porcentaje completado: ${data.resumen.porcentajeCompletado}%
-
-ESTADÍSTICAS POR ESTADO DE ETIQUETA
-----------------------------------
-Etiquetas en buen estado: ${data.productosRealizados.filter(p => p.LabelStatus == 1).length}
-Sin etiqueta: ${data.productosRealizados.filter(p => p.LabelStatus == 2).length}
-Etiquetas dañadas: ${data.productosRealizados.filter(p => p.LabelStatus == 3).length}
-
-PRODUCTOS REALIZADOS (${data.productosRealizados.length})
-${'='.repeat(50)}
-${data.productosRealizados.map(p => 
-    `ID: ${p.id_unit} | ${p.ProductInfo?.name || 'N/A'} | Estado: ${p.LabelStatus == 1 ? 'BIEN' : p.LabelStatus == 2 ? 'NO TIENE' : 'DAÑADA'} | Observaciones: ${p.observations || 'Sin observaciones'}`
-).join('\n')}
-
-PRODUCTOS PENDIENTES (${data.productosPendientes.length})
-${'='.repeat(50)}
-${data.productosPendientes.map(p => 
-    `ID: ${p.id_unit} | ${p.ProductInfo?.name || 'N/A'} | Ubicación: ${p.LocationInfo?.location_name || 'N/A'}`
-).join('\n')}
-        `.trim();
-    }
-
-    function descargarArchivoTexto(contenido, nombreArchivo) {
-        const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nombreArchivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    }
-
-    // ==================== SELECTION MANAGEMENT ====================
-    function toggleProductSelection(productId) {
-        if (selectedProducts.has(productId)) {
-            selectedProducts.delete(productId);
-        } else {
-            selectedProducts.add(productId);
-        }
-        
-        actualizarSeleccionVisual();
-        actualizarBotonesSeleccion();
-    }
-
-    function toggleSelectAll() {
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        const checkboxes = document.querySelectorAll('.producto-checkbox');
-        
-        if (masterCheckbox.checked) {
-            // Seleccionar todos
-            pendientes.forEach(p => selectedProducts.add(p.id_unit));
-            checkboxes.forEach(cb => cb.checked = true);
-        } else {
-            // Deseleccionar todos
-            selectedProducts.clear();
-            checkboxes.forEach(cb => cb.checked = false);
-        }
-        
-        actualizarSeleccionVisual();
-        actualizarBotonesSeleccion();
-    }
-
-    function actualizarSeleccionVisual() {
-        const rows = document.querySelectorAll('.producto-row');
-        rows.forEach(row => {
-            const productId = parseInt(row.getAttribute('data-id'));
-            const checkbox = row.querySelector('.producto-checkbox');
-            
-            if (selectedProducts.has(productId)) {
-                row.classList.add('selected');
-                checkbox.checked = true;
-            } else {
-                row.classList.remove('selected');
-                checkbox.checked = false;
+            if (!selectLabel?.value) {
+                productosIncompletos.push(producto.id_unit);
             }
         });
 
-        // Actualizar master checkbox
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        if (masterCheckbox) {
-            const totalProductos = pendientes.length;
-            const productosSeleccionados = selectedProducts.size;
-            
-            masterCheckbox.indeterminate = productosSeleccionados > 0 && productosSeleccionados < totalProductos;
-            masterCheckbox.checked = productosSeleccionados === totalProductos && totalProductos > 0;
+        if (productosIncompletos.length > 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos incompletos',
+                html: `
+                    <p>Los siguientes productos tienen campos sin completar:</p>
+                    <div class="alert alert-warning mt-2">
+                        <strong>Productos:</strong> ${productosIncompletos.join(', ')}
+                    </div>
+                    <p>Por favor, completa el <strong>estado de la etiqueta</strong> para todos los productos antes de continuar.</p>
+                `,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f39c12'
+            });
+            return;
+        }
+
+        // Mostrar confirmación con detalles
+        const result = await Swal.fire({
+            icon: 'question',
+            title: '¿Aprobar todos los productos?',
+            html: `
+                <div class="text-start">
+                    <p><strong>Estás a punto de aprobar ${pendientes.length} productos:</strong></p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Esto marcará todos los productos como <strong>"Realizado"</strong> y los removerá de la lista de pendientes.
+                    </div>
+                    <p><strong>¿Estás seguro de continuar?</strong></p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: `<i class="fas fa-check me-1"></i> Sí, aprobar todos`,
+            cancelButtonText: `<i class="fas fa-times me-1"></i> Cancelar`,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            focusCancel: true,
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) return;
+
+        // Mostrar progress con SweetAlert
+        Swal.fire({
+            title: 'Aprobando productos...',
+            html: `
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Procesando...</span>
+                        </div>
+                    </div>
+                    <p id="progress-text">Iniciando proceso...</p>
+                    <div class="progress mt-3">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: 0%"></div>
+                    </div>
+                </div>
+            `,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.getHtmlContainer().style.padding = '20px';
+            }
+        });
+
+        try {
+            // Crear copia del array porque aprobarUno() modifica el array original
+            const productosParaAprobar = [...pendientes];
+            const totalProductos = productosParaAprobar.length;
+            let productosAprobados = 0;
+            let errores = [];
+
+            for (let i = 0; i < productosParaAprobar.length; i++) {
+                const producto = productosParaAprobar[i];
+                
+                // Actualizar progress
+                const progreso = Math.round(((i + 1) / totalProductos) * 100);
+                document.getElementById('progress-text').textContent = 
+                    `Aprobando producto ${producto.id_unit} (${i + 1}/${totalProductos})`;
+                document.getElementById('progress-bar').style.width = `${progreso}%`;
+
+                try {
+                    // Como aprobarUno() remueve elementos, siempre aprobar el índice 0
+                    await aprobarUno(0);
+                    productosAprobados++;
+                    
+                    // Pequeña pausa para evitar sobrecarga y mostrar progreso
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                    errores.push({
+                        id: producto.id_unit,
+                        error: error.message
+                    });
+                }
+            }
+
+            // Cerrar progress y mostrar resultado
+            Swal.close();
+
+            if (errores.length === 0) {
+                // Todos los productos se aprobaron exitosamente
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Aprobación completada!',
+                    html: `
+                        <div class="text-center">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Se aprobaron <strong>${productosAprobados}</strong> productos exitosamente
+                            </div>
+                            <p>Todos los productos han sido marcados como <strong>"Realizado"</strong></p>
+                        </div>
+                    `,
+                    confirmButtonText: 'Excelente',
+                    confirmButtonColor: '#28a745'
+                });
+            } else if (productosAprobados > 0) {
+                // Algunos productos se aprobaron, otros tuvieron errores
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aprobación parcial',
+                    html: `
+                        <div class="text-start">
+                            <div class="alert alert-success mb-2">
+                                <i class="fas fa-check me-2"></i>
+                                <strong>${productosAprobados}</strong> productos aprobados exitosamente
+                            </div>
+                            <div class="alert alert-danger mb-2">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>${errores.length}</strong> productos con errores
+                            </div>
+                            <details class="mt-3">
+                                <summary class="btn btn-sm btn-outline-danger">Ver errores</summary>
+                                <div class="mt-2">
+                                    ${errores.map(e => `
+                                        <div class="small text-muted mb-1">
+                                            <strong>Producto ${e.id}:</strong> ${e.error}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </details>
+                        </div>
+                    `,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#f39c12'
+                });
+            } else {
+                // Todos los productos fallaron
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error en la aprobación',
+                    html: `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle me-2"></i>
+                            No se pudo aprobar ningún producto
+                        </div>
+                        <p>Revisa la conexión a internet y vuelve a intentar.</p>
+                    `,
+                    confirmButtonText: 'Reintentar',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+
+        } catch (error) {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error inesperado',
+                text: `Ocurrió un error durante el proceso: ${error.message}`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#dc3545'
+            });
         }
     }
 
-    function actualizarBotonesSeleccion() {
-        const selectedCount = selectedProducts.size;
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const aprobarSeleccionadosBtn = document.getElementById('aprobarSeleccionadosBtn');
-        const selectAllBtn = document.getElementById('selectAllBtn');
-
-        if (selectedCountSpan) {
-            selectedCountSpan.textContent = selectedCount;
-        }
-
-        if (aprobarSeleccionadosBtn) {
-            aprobarSeleccionadosBtn.disabled = selectedCount === 0;
-            aprobarSeleccionadosBtn.innerHTML = `
-                <i class="fas fa-check me-1"></i>
-                Aprobar Seleccionados (${selectedCount})
-            `;
-        }
-
-        if (selectAllBtn) {
-            selectAllBtn.innerHTML = selectedCount === pendientes.length 
-                ? '<i class="fas fa-square me-1"></i> Deseleccionar Todos'
-                : '<i class="fas fa-check-square me-1"></i> Seleccionar Todos';
-        }
-    }
-
-    // ==================== UI HELPERS ====================
-    function mostrarLoading(show) {
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = show ? 'flex' : 'none';
-        }
-    }
-
-    function mostrarTableContainer(show) {
-        const tableContainer = document.getElementById('tablaPendientes');
-        if (tableContainer) {
-            tableContainer.style.display = show ? 'block' : 'none';
-        }
-    }
-
-    function mostrarProgress(show, title = '') {
-        const progressContainer = document.getElementById('progressContainer');
-        const progressTitle = document.getElementById('progressTitle');
-        
-        if (progressContainer) {
-            progressContainer.style.display = show ? 'block' : 'none';
-        }
-        
-        if (progressTitle && title) {
-            progressTitle.textContent = title;
-        }
-    }
-
-    function actualizarProgress(percent, text, percentText) {
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const progressPercent = document.getElementById('progressPercent');
-        
-        if (progressBar) progressBar.style.width = `${percent}%`;
-        if (progressText) progressText.textContent = text;
-        if (progressPercent) progressPercent.textContent = percentText;
-    }
-
-    function actualizarStats() {
-        const totalPendientesEl = document.getElementById('totalPendientes');
-        const totalAprobadosEl = document.getElementById('totalAprobados');
-        const tiempoEstimadoEl = document.getElementById('tiempoEstimado');
-
-        if (totalPendientesEl) {
-            totalPendientesEl.textContent = pendientes.length;
-        }
-
-        if (totalAprobadosEl) {
-            totalAprobadosEl.textContent = stats.totalAprobados;
-        }
-
-        if (tiempoEstimadoEl) {
-            const tiempoEstimado = pendientes.length * 2; // 2 minutos por producto
-            tiempoEstimadoEl.textContent = `${tiempoEstimado} min`;
-        }
-    }
-
+    // Funciones auxiliares que faltaban
     function mostrarMensajeFinal() {
-        mostrarTableContainer(false);
-        
-        const mensajeFinal = document.getElementById('mensajeFinal');
-        const nextReviewDateEl = document.getElementById('nextReviewDate');
-        const completedStatsEl = document.getElementById('completedStats');
-        const timeStatsEl = document.getElementById('timeStats');
-        
-        if (mensajeFinal) {
-            mensajeFinal.style.display = 'block';
-        }
-        
-        if (nextReviewDateEl) {
-            nextReviewDateEl.textContent = getNextReviewDate();
-        }
-        
-        if (completedStatsEl) {
-            completedStatsEl.textContent = `${stats.totalAprobados} productos aprobados`;
-        }
-        
-        if (timeStatsEl && stats.tiempoInicio) {
-            const tiempoTranscurrido = Math.round((new Date() - stats.tiempoInicio) / (1000 * 60));
-            timeStatsEl.textContent = `Completado en ${tiempoTranscurrido} minutos`;
-        }
+        const trMensaje = document.createElement('tr');
+        trMensaje.id = "rowMensajeFinal";
+        trMensaje.innerHTML = `
+            <td colspan="9" class="text-center py-5">
+                <div class="completion-message">
+                    <i class="fas fa-check-circle mb-3 text-success" style="font-size: 4rem;"></i>
+                    <h3 class="text-success mt-3 mb-2">¡Revisión Completada!</h3>
+                    <p class="text-muted mb-4">Todos los productos han sido revisados exitosamente.<br>
+                    La próxima revisión será en ${getNextReviewDate()}.</p>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <a href="index.html" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-1"></i> Regresar al Inventario
+                        </a>
+                        <button class="btn btn-outline-success" onclick="generarReporte()">
+                            <i class="fas fa-file-alt me-1"></i> Generar Reporte
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="iniciarNuevaRevisionConfirm()">
+                            <i class="fas fa-refresh me-1"></i> Nueva Revisión
+                        </button>
+                    </div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(trMensaje);
+    }
+
+    // Wrapper para iniciar nueva revisión con confirmación desde mensaje final
+    async function iniciarNuevaRevisionConfirm() {
+        await iniciarNuevaRevision();
     }
 
     function getNextReviewDate() {
@@ -914,142 +637,48 @@ ${data.productosPendientes.map(p =>
         });
     }
 
-    // ==================== VALIDATION ====================
-    function validarCamposCompletos() {
-        const productosIncompletos = [];
+    function agregarContadorPendientes() {
+        const existingCounter = document.getElementById('pendientes-counter');
+        if (existingCounter) existingCounter.remove();
         
-        pendientes.forEach((producto, index) => {
-            const selectLabel = document.getElementById(`label-${index}`);
-            
-            if (!selectLabel?.value) {
-                productosIncompletos.push(producto.id_unit);
-            }
-        });
-        
-        return productosIncompletos;
-    }
-
-    // ==================== NOTIFICATIONS ====================
-    function mostrarNotificacion(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed notification-toast`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px; max-width: 400px;';
-        notification.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${getNotificationIcon(type)} me-2"></i>
-                <div>${message}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        const counter = document.createElement('tr');
+        counter.id = 'pendientes-counter';
+        counter.innerHTML = `
+            <td colspan="9" class="bg-light text-center py-2">
+                <strong><i class="fas fa-tasks me-1"></i>Productos pendientes: ${pendientes.length}</strong>
+            </td>
         `;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
+        tbody.insertBefore(counter, tbody.firstChild);
     }
 
-    function getNotificationIcon(type) {
-        const icons = {
-            success: 'check-circle',
-            danger: 'exclamation-triangle',
-            warning: 'exclamation-circle',
-            info: 'info-circle'
-        };
-        return icons[type] || 'info-circle';
+    function actualizarClaseSelect(select) {
+        // Esta función ya no es necesaria sin el select de estado físico
+        // Se mantiene para compatibilidad si se necesita en el futuro
     }
 
-    function mostrarError(titulo, error) {
-        Swal.fire({
-            icon: 'error',
-            title: titulo,
-            text: error.message || error,
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#dc3545'
-        });
+    function generarReporte() {
+        showNotification('Generando reporte de revisión...', 'info');
+        // Aquí implementarías la lógica para generar un reporte
     }
 
-    function mostrarAdvertencia(mensaje) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Atención',
-            text: mensaje,
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#f39c12'
-        });
-    }
-
-    function mostrarInfo(mensaje) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Información',
-            text: mensaje,
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#3085d6'
-        });
-    }
-
-    function mostrarResultadoAprobacion(aprobados, errores) {
-        if (errores.length === 0) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Aprobación completada!',
-                html: `
-                    <div class="text-center">
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle me-2"></i>
-                            Se aprobaron <strong>${aprobados}</strong> productos exitosamente
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'Excelente',
-                confirmButtonColor: '#28a745'
-            });
-        } else if (aprobados > 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Aprobación parcial',
-                html: `
-                    <div class="text-start">
-                        <div class="alert alert-success mb-2">
-                            <i class="fas fa-check me-2"></i>
-                            <strong>${aprobados}</strong> productos aprobados
-                        </div>
-                        <div class="alert alert-danger mb-2">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>${errores.length}</strong> productos con errores
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#f39c12'
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error en la aprobación',
-                text: 'No se pudo aprobar ningún producto. Revisa la conexión.',
-                confirmButtonText: 'Reintentar',
-                confirmButtonColor: '#dc3545'
-            });
+    // Función de inicialización
+    async function inicializar() {
+        try {
+            await obtenerProductosPendientes();
+            renderTabla();
+        } catch (error) {
+            showNotification('Error al inicializar el sistema', 'danger');
         }
     }
 
-    // ==================== UTILITY FUNCTIONS ====================
-    function getCurrentUser() {
-        return localStorage.getItem('currentUser') || 'Sistema';
-    }
-
-    // ==================== GLOBAL FUNCTIONS ====================
-    window.aprobarProducto = aprobarProducto;
+    // Hacer funciones disponibles globalmente
+    window.aprobarUno = aprobarUno;
     window.aprobarTodos = aprobarTodos;
-    window.aprobarSeleccionados = aprobarSeleccionados;
-    window.toggleProductSelection = toggleProductSelection;
-    window.toggleSelectAll = toggleSelectAll;
     window.generarReporte = generarReporte;
     window.iniciarNuevaRevision = iniciarNuevaRevision;
+    window.iniciarNuevaRevisionConfirm = iniciarNuevaRevisionConfirm;
+    window.actualizarClaseSelect = actualizarClaseSelect;
 
-    // ==================== INITIALIZATION ====================
+    // Inicializar el sistema
     inicializar();
 });

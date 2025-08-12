@@ -8,6 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
   <link href="css/style.css" rel="stylesheet" />
   <link href="css/index.css" rel="stylesheet" />
+  <link href="css/filter.css" rel="stylesheet" />
 </head>
 <body>
   <div class="dashboard-container">
@@ -106,53 +107,94 @@
   </div>
 
   <!-- Modal de Filtros -->
-  <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="filterModalLabel">Seleccionar Filtros</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <form id="filterForm">
-            <select class="form-select mb-3" id="filterEtiquetado">
-              <option selected>Etiquetado</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-            <select class="form-select mb-3" id="filterStatus">
-              <option selected>Status</option>
-              <option value="bueno">Bueno</option>
-              <option value="danado">Dañado</option>
-            </select>
-            <select class="form-select mb-3" id="filterTipo">
-              <option selected>Tipo</option>
-              <option value="cons">Cons</option>
-              <option value="cont">Cont</option>
-            </select>
-            <select class="form-select mb-3" id="filterEdificio">
-              <option selected>Edificio</option>
-              <option value="a">A</option>
-              <option value="b">B</option>
-              <option value="c">C</option>
-            </select>
-            <select class="form-select mb-3" id="filterArea">
-              <option selected>Área</option>
-              <option value="sala_maestros">Sala de maestros</option>
-              <option value="aula">Aula</option>
-              <option value="laboratorio">Laboratorio</option>
-              <option value="bodega">Bodega</option>
-              
-            </select>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" id="applyFilters">Aplicar Filtros</button>
-        </div>
+  <!-- Modal de Filtros Actualizado -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filterModalLabel">
+          <i class="fas fa-filter me-2"></i>Filtros de Inventario
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="filterForm">
+          
+          <!-- Sección: Estado del Producto -->
+          <div class="filter-section">
+            <h6><i class="fas fa-check-circle me-2"></i>Estado del Producto</h6>
+            <div class="filter-row">
+              <select class="form-select" id="filterStatus">
+                <option selected>Status</option>
+              </select>
+              <select class="form-select" id="filterPendingStatus">
+                <option selected>Check</option>
+              </select>
+              <select class="form-select" id="filterEtiquetado">
+                <option selected>Etiquetado</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+              <select class="form-select" id="filterRealizado">
+                <option selected>Realizado</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sección: Información del Producto -->
+          <div class="filter-section">
+            <h6><i class="fas fa-box me-2"></i>Información del Producto</h6>
+            <div class="filter-row">
+              <select class="form-select" id="filterTipo">
+                <option selected>Tipo</option>
+              </select>
+              <select class="form-select" id="filterMarca">
+                <option selected>Marca</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sección: Ubicación -->
+          <div class="filter-section">
+            <h6><i class="fas fa-map-marker-alt me-2"></i>Ubicación</h6>
+            <div class="filter-row">
+              <select class="form-select" id="filterEdificio">
+                <option selected>Edificio</option>
+              </select>
+              <select class="form-select" id="filterArea">
+                <option selected>Área</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sección: Personal -->
+          <div class="filter-section">
+            <h6><i class="fas fa-user me-2"></i>Personal</h6>
+            <div class="filter-row">
+              <select class="form-select" id="filterResguardante">
+                <option selected>Resguardante</option>
+              </select>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-outline-danger me-2" onclick="resetFilters()">
+          <i class="fas fa-sync-alt me-1"></i>Limpiar Todo
+        </button>
+        <button type="button" class="btn btn-primary" id="applyFilters">
+          <i class="fas fa-check me-1"></i>Aplicar Filtros
+        </button>
       </div>
     </div>
   </div>
+</div>
 
   <!--  JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -161,10 +203,8 @@
 
 <!--  <script src="js/mobile.js"></script>-->
   <script src="js/script.js"></script>
-  <script src="js/logout.js"></script>
   <script src="js/buscador.js"></script>
   <script src="js/apartado.js"></script>
-  <script src="js/botonDesc.js"></script>
   <script src="js/desacProduc.js"></script>
   <script src="js/product_select.js"></script>
   <script src="js/session-manager.js"></script>
