@@ -10,19 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Función para manejar la edición de productos seleccionados
 function editSelectedProducts() {
-  const rows = document.querySelectorAll('#inventoryTableBody tr');
+  const rows = document.querySelectorAll('#inventoryTableBody tr.item-row'); // Solo seleccionar filas de items, no expandibles
   let selectedProductIds = [];
 
   // Recorrer las filas y verificar si los checkboxes están seleccionados
   rows.forEach(row => {
     const checkbox = row.querySelector('input[type="checkbox"]');
-    const cells = row.querySelectorAll('td');
-
-    // Verificar que la fila tenga al menos 2 celdas
-    if (cells.length >= 2) {
-      const productId = cells[1].textContent; // Obtener solo el ID del producto desde la segunda celda
-      if (checkbox.checked) {
-        selectedProductIds.push(productId); // Agregar solo la ID seleccionada
+    
+    if (checkbox && checkbox.checked) {
+      // Obtener el id_unit desde el atributo data-id que se asigna en createItemRow
+      const productId = row.getAttribute('data-id');
+      if (productId) {
+        selectedProductIds.push(productId);
       }
     }
   });
@@ -44,4 +43,3 @@ function editSelectedProducts() {
   // Redirigir automáticamente a la página de edición
   window.location.href = 'editItems.html';
 }
-

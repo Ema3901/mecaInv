@@ -1,7 +1,14 @@
+// Agregar event listener cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', () => {
+  const desactivarBtn = document.getElementById('desactivarBtn');
+  if (desactivarBtn) {
+    desactivarBtn.addEventListener('click', desactivarProductos);
+  }
+});
 
-    async function desactivarProductos() {
-  // Obtener los productos seleccionados
-  const checkboxes = document.querySelectorAll('#inventoryTable tbody input[type="checkbox"]:checked');
+async function desactivarProductos() {
+  // Obtener los productos seleccionados (solo filas de items, no expandibles)
+  const checkboxes = document.querySelectorAll('#inventoryTableBody tr.item-row input[type="checkbox"]:checked');
   
   if (checkboxes.length === 0) {
     Swal.fire({
@@ -13,39 +20,53 @@
     return;
   }
 
-  // Obtener los IDs de los productos seleccionados
+  // Obtener los IDs de los productos seleccionados usando el atributo data-id
   const productIds = Array.from(checkboxes).map(checkbox => {
-    const row = checkbox.closest('tr');
-    return row.querySelector('td:nth-child(2)').textContent.trim(); // ID del producto
-  });
+    const row = checkbox.closest('tr.item-row');
+    return row.getAttribute('data-id'); // Usar data-id en lugar del texto de la celda
+  }).filter(id => id); // Filtrar IDs válidos
 
   Swal.fire({
     title: '¿Estás seguro?',
-    text: '¡Esto eliminará los productos seleccionados!',
+    text: '¡Esto deshabilitará los productos seleccionados!',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí, desactivar',
+    confirmButtonText: 'Sí, deshabilitar',
     cancelButtonText: 'Cancelar'
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`https://healtyapi.bsite.net/api/product unit/Delete?id=${productIds.join(',')}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+        // Hacer peticiones PUT individuales para cada producto
+        const disablePromises = productIds.map(id => 
+          fetch(`https://healtyapi.bsite.net/api/product_units/disable/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          })
+        );
 
-        if (response.ok) {
-          // Eliminar las filas de los productos deshabilitados
+        const responses = await Promise.all(disablePromises);
+        const allSuccessful = responses.every(response => response.ok);
+
+        if (allSuccessful) {
+          // Eliminar las filas de los productos deshabilitados (tanto la fila principal como la expandible)
           checkboxes.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            row.remove();  // Eliminar la fila de la tabla
+            const row = checkbox.closest('tr.item-row');
+            const nextRow = row.nextElementSibling; // La fila expandible
+            
+            // Eliminar la fila expandible si existe
+            if (nextRow && nextRow.classList.contains('expandable-row')) {
+              nextRow.remove();
+            }
+            
+            // Eliminar la fila principal
+            row.remove();
           });
 
           Swal.fire({
             title: 'Éxito',
-            text: 'Los productos seleccionados han sido eliminados.',
+            text: 'Los productos seleccionados han sido deshabilitados.',
             icon: 'success',
             confirmButtonText: 'Aceptar'
           });

@@ -399,7 +399,7 @@ function removeLoadingScreen() {
 
         row.innerHTML = `
             <td><input type="checkbox" class="checkbox-select"></td>
-            <td class="col-id">${item.id_unit}</td>
+            <td class="col-id">${item.internal_code}</td>
             <td class="col-articulo">${item.ProductInfo.name}</td>
             <td>${item.ProductInfo.model}</td>
             <td>${item.LocationInfo.location_name}</td>
@@ -484,7 +484,7 @@ function removeLoadingScreen() {
         
         // Aplicar búsqueda sobre los datos base
         const searchedData = baseData.filter(item => 
-            item.id_unit.toString().includes(filter) || 
+            item.internal_code.toString().includes(filter) || 
             item.ProductInfo.name.toUpperCase().includes(filter)
         );
         

@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             row.innerHTML = `
                 <td><input type="checkbox" class="checkbox-select"></td>
-                <td class="col-id">${item.id_unit}</td>
+                <td class="col-id">${item.internal_code}</td>
                 <td class="col-articulo">${item.ProductInfo.name}</td>
                 <td>${item.ProductInfo.model}</td>
                 <td>${item.LocationInfo.location_name}</td>
