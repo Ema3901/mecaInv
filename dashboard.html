@@ -8,329 +8,26 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
-  <style>
-    :root {
-      --primary-green: #1AB192;
-      --primary-green-dark: #09A685;
-      --status-good: #28a745;
-      --status-bad: #dc3545;
-      --status-pending: #ffc107;
-    }
 
-    body {
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
+  <link href="css/style.css" rel="stylesheet" />
+  <link href="css/dashboard.css" rel="stylesheet" />
 
-    .dashboard-container {
-      display: flex;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      background-color: var(--primary-green);
-      width: 250px;
-      min-height: 100vh;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      padding-top: 1.5rem;
-      position: sticky;
-      top: 0;
-    }
-
-    .sidebar .sidebar-header {
-      padding: 0 1.5rem 1rem 1.5rem;
-      font-size: 1.5rem;
-      font-weight: 700;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .sidebar .sidebar-nav ul {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 1.5rem;
-    }
-
-    .sidebar .sidebar-nav ul li {
-      margin-bottom: 0.5rem;
-    }
-
-    .sidebar .sidebar-nav ul li a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.6rem 1.5rem;
-      transition: background-color 0.3s;
-      border-radius: 0.375rem;
-      margin: 0 0.5rem;
-    }
-
-    .sidebar .sidebar-nav ul li a:hover,
-    .sidebar .sidebar-nav ul li a.active {
-      background-color: var(--primary-green-dark);
-      color: white;
-      text-decoration: none;
-    }
-
-    /* Main Content */
-    .main-content {
-      flex-grow: 1;
-      padding: 2rem 3rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .main-header {
-      color: #222;
-    }
-
-    .user-box {
-      display: flex;
-      align-items: center;
-      background-color: #f8f9fa;
-      padding: 0.5rem 1rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      width: auto;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .user-box:hover {
-      background-color: #e9ecef;
-    }
-
-    .user-box img {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid var(--primary-green);
-      margin-right: 0.75rem;
-    }
-
-    .user-box span {
-      font-weight: 500;
-      color: #555;
-      margin-right: 0.5rem;
-    }
-
-    .divider {
-      border-top: 2px solid #ddd;
-      margin: 20px 0;
-    }
-
-    /* Cards */
-    .admin-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border: none;
-    }
-
-    .stats-card {
-      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
-      color: white;
-      text-align: center;
-      transition: transform 0.3s ease;
-    }
-
-    .stats-card:hover {
-      transform: translateY(-5px);
-    }
-
-    .stats-card .stats-number {
-      font-size: 2.5rem;
-      font-weight: 700;
-      display: block;
-    }
-
-    .stats-card .stats-label {
-      font-size: 1rem;
-      opacity: 0.9;
-    }
-
-    /* Tables */
-    .table-container {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      overflow-x: auto;
-    }
-
-    .table {
-      margin-bottom: 0;
-    }
-
-    .table th {
-      border-top: none;
-      font-weight: 600;
-      color: #495057;
-      background-color: #f8f9fa;
-      padding: 1rem 0.75rem;
-    }
-
-    .table td {
-      padding: 0.75rem;
-      vertical-align: middle;
-    }
-
-    .btn-action {
-      padding: 0.25rem 0.5rem;
-      margin: 0 0.125rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      border: none;
-    }
-
-    .btn-edit {
-      background-color: #ffc107;
-      color: #000;
-    }
-
-    .btn-delete {
-      background-color: #dc3545;
-      color: white;
-    }
-
-    .btn-view {
-      background-color: #17a2b8;
-      color: white;
-    }
-
-    /* Forms */
-    .form-section {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 2rem;
-    }
-
-    .form-section h4 {
-      color: var(--primary-green);
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #e9ecef;
-    }
-
-    /* Modal Improvements */
-    .modal-content {
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-
-    .modal-header {
-      background-color: var(--primary-green);
-      color: white;
-      border-radius: 12px 12px 0 0;
-    }
-
-    /* Badges */
-    .badge-role {
-      font-size: 0.8rem;
-      padding: 0.4rem 0.8rem;
-      border-radius: 20px;
-    }
-
-    .badge-admin { background-color: #dc3545; }
-    .badge-user { background-color: #28a745; }
-    .badge-student { background-color: #17a2b8; }
-
-    /* Loading */
-    .loading {
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .spinner-border-custom {
-      color: var(--primary-green);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .main-content {
-        padding: 1rem 1.5rem;
-      }
-      
-      .sidebar {
-        width: 60px;
-        padding-top: 1rem;
-      }
-      
-      .sidebar .sidebar-header,
-      .sidebar .sidebar-nav ul li a span {
-        display: none;
-      }
-      
-      .sidebar .sidebar-nav ul li a {
-        justify-content: center;
-        padding: 0.5rem;
-      }
-    }
-
-    /* Hide sections initially */
-    .section-content {
-      display: none;
-    }
-
-    .section-content.active {
-      display: block;
-    }
-
-    .password-field {
-      position: relative;
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: #6c757d;
-    }
-
-    .alert-custom {
-      border-radius: 12px;
-      border: none;
-      padding: 1rem 1.5rem;
-      margin-bottom: 1rem;
-    }
-  </style>
 </head>
 <body>
   <div class="dashboard-container">
     <aside class="sidebar">
-      <div class="sidebar-header" title="Panel Administrativo">
-        Admin Panel
+      <div class="sidebar-header" title="Menú">
+        Inventario
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="index.html" class="active"><i class="fas fa-cubes"></i> Inventario</a></li>
-          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> Desactivados</a></li>
-          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> Pendientes Check</a></li>
-          <li><a href="historial.html"><i class="fas fa-history"></i> Historial</a></li>
-          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> Ocupados</a></li>
-          
-          <li><a href="excel.html"><i class="fas fa-history"></i> Descargar tablas</a></li>
-          <li><a href="dashboard.html"><i class="fas fa-shield-alt"></i> Panel administrativo</a></li>
+          <li><a href="index.html"><i class="fas fa-cubes"></i> <span>Inventario</span></a></li>
+          <li><a href="deleteItems.html"><i class="fas fa-archive"></i> <span>Desactivados</span></a></li>
+          <li><a href="pendientesCheck.html"><i class="fas fa-exclamation-circle"></i> <span>Pendientes Check</span></a></li>
+          <li><a href="historial.html"><i class="fas fa-history"></i> <span>Historial</span></a></li>
+          <li><a href="productosOcupados.html"><i class="fas fa-user-clock"></i> <span>Ocupados</span></a></li>
+          <li><a href="excel.html"><i class="fas fa-download"></i> <span>Descargar tablas</span></a></li>
+          <li><a href="dashboard.html" class="active"><i class="fas fa-shield-alt"></i> <span>Panel administrativo</span></a></li>
         </ul>
       </nav>
     </aside>
@@ -373,34 +70,40 @@
           </div>
           <div class="col-lg-3 col-md-6 mb-3">
             <div class="admin-card stats-card">
-              <span class="stats-number" id="total-categories">-</span>
-              <span class="stats-label">Categorías</span>
+              <span class="stats-number" id="total-laboratories">-</span>
+              <span class="stats-label">Laboratorios</span>
             </div>
           </div>
         </div>
 
         <div class="admin-card">
-          <h4><i class="fas fa-chart-line me-2"></i>Resumen del Sistema</h4>
-          <p>Bienvenido al panel administrativo. Desde aquí puedes gestionar todos los aspectos del sistema de inventario.</p>
+          <h4><i class="fas fa-chart-line me-2"></i>Dashboard Administrativo</h4>
+          <p>Bienvenido al panel administrativo del sistema de inventario. Desde aquí puedes gestionar todos los aspectos del sistema.</p>
           <div class="row">
-            <div class="col-md-6">
-              <h6>Accesos Rápidos</h6>
+            <div class="col-md-12">
+              <h6>Gestión de Entidades</h6>
               <div class="d-flex flex-wrap gap-2">
                 <button class="btn btn-outline-primary btn-sm" onclick="showSection('users')">
-                  <i class="fas fa-users me-1"></i>Gestionar Usuarios
+                  <i class="fas fa-users me-1"></i>Usuarios
                 </button>
                 <button class="btn btn-outline-success btn-sm" onclick="showSection('students')">
-                  <i class="fas fa-user-graduate me-1"></i>Ver Estudiantes
+                  <i class="fas fa-user-graduate me-1"></i>Estudiantes
                 </button>
                 <button class="btn btn-outline-info btn-sm" onclick="showSection('brands')">
-                  <i class="fas fa-tags me-1"></i>Administrar Marcas
+                  <i class="fas fa-tags me-1"></i>Marcas
                 </button>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <h6>Estado del Sistema</h6>
-              <div class="text-success">
-                <i class="fas fa-check-circle me-2"></i>Todos los servicios funcionando correctamente
+                <button class="btn btn-outline-warning btn-sm" onclick="showSection('categories')">
+                  <i class="fas fa-list me-1"></i>Categorías
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="showSection('areas')">
+                  <i class="fas fa-map-marker-alt me-1"></i>Áreas
+                </button>
+                <button class="btn btn-outline-dark btn-sm" onclick="showSection('locations')">
+                  <i class="fas fa-location-arrow me-1"></i>Ubicaciones
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="showSection('laboratories')">
+                  <i class="fas fa-flask me-1"></i>Laboratorios
+                </button>
               </div>
             </div>
           </div>
@@ -420,9 +123,6 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex gap-2">
               <input type="text" class="form-control" id="user-search" placeholder="Buscar usuarios..." style="width: 300px;">
-              <select class="form-select" id="role-filter" style="width: 200px;">
-                <option value="">Todos los roles</option>
-              </select>
             </div>
             <button class="btn btn-outline-secondary" onclick="loadUsers()">
               <i class="fas fa-sync me-1"></i>Actualizar
@@ -437,13 +137,12 @@
                   <th>Nombre</th>
                   <th>Email</th>
                   <th>Rol</th>
-                  <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="users-table-body">
                 <tr>
-                  <td colspan="6" class="text-center">
+                  <td colspan="5" class="text-center">
                     <div class="loading">
                       <div class="spinner-border spinner-border-custom" role="status"></div>
                       <p>Cargando usuarios...</p>
@@ -469,12 +168,6 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex gap-2">
               <input type="text" class="form-control" id="student-search" placeholder="Buscar estudiantes..." style="width: 300px;">
-              <select class="form-select" id="grade-filter" style="width: 200px;">
-                <option value="">Todos los grados</option>
-              </select>
-              <select class="form-select" id="group-filter" style="width: 200px;">
-                <option value="">Todos los grupos</option>
-              </select>
             </div>
             <button class="btn btn-outline-secondary" onclick="loadStudents()">
               <i class="fas fa-sync me-1"></i>Actualizar
@@ -696,111 +389,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Grades Section -->
-      <div id="grades-section" class="section-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3>Gestión de Grados</h3>
-          <button class="btn btn-success" onclick="openAddGradeModal()">
-            <i class="fas fa-plus me-2"></i>Nuevo Grado
-          </button>
-        </div>
-
-        <div class="admin-card">
-          <div class="table-container">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="grades-table-body">
-                <tr>
-                  <td colspan="4" class="text-center">
-                    <div class="loading">
-                      <div class="spinner-border spinner-border-custom" role="status"></div>
-                      <p>Cargando grados...</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Groups Section -->
-      <div id="groups-section" class="section-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3>Gestión de Grupos</h3>
-          <button class="btn btn-success" onclick="openAddGroupModal()">
-            <i class="fas fa-plus me-2"></i>Nuevo Grupo
-          </button>
-        </div>
-
-        <div class="admin-card">
-          <div class="table-container">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="groups-table-body">
-                <tr>
-                  <td colspan="4" class="text-center">
-                    <div class="loading">
-                      <div class="spinner-border spinner-border-custom" role="status"></div>
-                      <p>Cargando grupos...</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status Section -->
-      <div id="status-section" class="section-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3>Gestión de Estados</h3>
-          <button class="btn btn-success" onclick="openAddStatusModal()">
-            <i class="fas fa-plus me-2"></i>Nuevo Estado
-          </button>
-        </div>
-
-        <div class="admin-card">
-          <div class="table-container">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="status-table-body">
-                <tr>
-                  <td colspan="4" class="text-center">
-                    <div class="loading">
-                      <div class="spinner-border spinner-border-custom" role="status"></div>
-                      <p>Cargando estados...</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </main>
   </div>
 
@@ -834,70 +422,12 @@
                 </div>
                 <small class="text-muted">Mínimo 8 caracteres, incluya mayúsculas, minúsculas y números</small>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Confirmar Contraseña *</label>
-                <div class="password-field">
-                  <input type="password" class="form-control" id="userPasswordConfirm" required>
-                  <i class="fas fa-eye password-toggle" onclick="togglePassword('userPasswordConfirm')"></i>
-                </div>
-              </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <label class="form-label">Rol *</label>
-                <select class="form-select" id="userRole" required>
-                  <option value="">Seleccionar rol...</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Estado</label>
-                <select class="form-select" id="userStatus">
-                  <option value="true">Activo</option>
-                  <option value="false">Inactivo</option>
-                </select>
-              </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="button" class="btn btn-success" onclick="saveUser()">Guardar Usuario</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Password Change Modal -->
-  <div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Cambiar Contraseña</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="passwordForm">
-            <input type="hidden" id="passwordUserId">
-            <div class="mb-3">
-              <label class="form-label">Nueva Contraseña *</label>
-              <div class="password-field">
-                <input type="password" class="form-control" id="newPassword" required>
-                <i class="fas fa-eye password-toggle" onclick="togglePassword('newPassword')"></i>
-              </div>
-              <small class="text-muted">Mínimo 8 caracteres, incluya mayúsculas, minúsculas y números</small>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Confirmar Nueva Contraseña *</label>
-              <div class="password-field">
-                <input type="password" class="form-control" id="confirmNewPassword" required>
-                <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmNewPassword')"></i>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-warning" onclick="changePassword()">Cambiar Contraseña</button>
         </div>
       </div>
     </div>
@@ -922,30 +452,6 @@
               <div class="col-md-6">
                 <label class="form-label">Email *</label>
                 <input type="email" class="form-control" id="studentEmail" required>
-              </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <label class="form-label">Grado *</label>
-                <select class="form-select" id="studentGrade" required>
-                  <option value="">Seleccionar grado...</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Grupo *</label>
-                <select class="form-select" id="studentGroup" required>
-                  <option value="">Seleccionar grupo...</option>
-                </select>
-              </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <label class="form-label">Teléfono</label>
-                <input type="tel" class="form-control" id="studentPhone">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Fecha de Nacimiento</label>
-                <input type="date" class="form-control" id="studentBirthDate">
               </div>
             </div>
           </form>
@@ -1013,6 +519,7 @@
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/session-manager.js"></script>
+
   <script>
     // Configuration
     const API_BASE_URL = 'https://healtyapi.bsite.net/api';
@@ -1021,29 +528,28 @@
 
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
-      checkAuthentication();
       initializeNavigation();
       loadDashboardData();
     });
 
-
     // Navigation
     function initializeNavigation() {
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const section = this.getAttribute('data-section');
-          showSection(section);
-        });
-      });
+      // Set initial active state
+      document.querySelector('.sidebar .sidebar-nav a[href="dashboard.html"]').classList.add('active');
     }
 
     function showSection(sectionName) {
       // Update navigation
-      document.querySelectorAll('.nav-link').forEach(link => {
+      document.querySelectorAll('.sidebar .sidebar-nav a').forEach(link => {
         link.classList.remove('active');
       });
-      document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+      
+      // Find and activate the correct navigation link
+      document.querySelectorAll('.sidebar .sidebar-nav a').forEach(link => {
+        if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(sectionName)) {
+          link.classList.add('active');
+        }
+      });
 
       // Update content
       document.querySelectorAll('.section-content').forEach(section => {
@@ -1060,10 +566,7 @@
         categories: 'Gestión de Categorías',
         areas: 'Gestión de Áreas',
         locations: 'Gestión de Ubicaciones',
-        laboratories: 'Gestión de Laboratorios',
-        grades: 'Gestión de Grados',
-        groups: 'Gestión de Grupos',
-        status: 'Gestión de Estados'
+        laboratories: 'Gestión de Laboratorios'
       };
       document.getElementById('page-title').textContent = titles[sectionName] || 'Dashboard';
 
@@ -1074,12 +577,9 @@
           break;
         case 'users':
           loadUsers();
-          loadRoles();
           break;
         case 'students':
           loadStudents();
-          loadGrades();
-          loadGroups();
           break;
         case 'brands':
           loadBrands();
@@ -1095,15 +595,6 @@
           break;
         case 'laboratories':
           loadLaboratories();
-          break;
-        case 'grades':
-          loadGrades();
-          break;
-        case 'groups':
-          loadGroups();
-          break;
-        case 'status':
-          loadStatus();
           break;
       }
     }
@@ -1128,8 +619,12 @@
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result = await response.json();
-        return result;
+        // Check if response has content before parsing JSON
+        const text = await response.text();
+        if (text) {
+          return JSON.parse(text);
+        }
+        return null;
       } catch (error) {
         console.error('API call error:', error);
         showAlert(`Error en la operación: ${error.message}`, 'danger');
@@ -1140,46 +635,46 @@
     // Dashboard data loading
     async function loadDashboardData() {
       try {
-        const [users, students, brands, categories] = await Promise.all([
+        const [users, students, brands, laboratories] = await Promise.all([
           apiCall('/users'),
           apiCall('/students'),
           apiCall('/brands'),
-          apiCall('/categories')
+          apiCall('/laboratories')
         ]);
 
         document.getElementById('total-users').textContent = users ? users.length : '0';
         document.getElementById('total-students').textContent = students ? students.length : '0';
         document.getElementById('total-brands').textContent = brands ? brands.length : '0';
-        document.getElementById('total-categories').textContent = categories ? categories.length : '0';
+        document.getElementById('total-laboratories').textContent = laboratories ? laboratories.length : '0';
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+        document.getElementById('total-users').textContent = '0';
+        document.getElementById('total-students').textContent = '0';
+        document.getElementById('total-brands').textContent = '0';
+        document.getElementById('total-laboratories').textContent = '0';
       }
     }
 
     // Users management
     async function loadUsers() {
       const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="loading"><div class="spinner-border spinner-border-custom" role="status"></div><p>Cargando usuarios...</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="loading"><div class="spinner-border spinner-border-custom" role="status"></div><p>Cargando usuarios...</p></div></td></tr>';
 
       const users = await apiCall('/users');
-      if (!users) return;
+      if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No se encontraron usuarios</td></tr>';
+        return;
+      }
 
       tbody.innerHTML = users.map(user => `
         <tr>
           <td>${user.id_user || user.id}</td>
           <td>${user.name}</td>
           <td>${user.email}</td>
-          <td><span class="badge badge-role badge-${user.roleInfo?.name || 'user'}">${user.roleInfo?.name || 'N/A'}</span></td>
-          <td>${user.active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>'}</td>
+          <td>${user.RoleInfo ? user.RoleInfo.rol : 'N/A'}</td>
           <td>
-            <button class="btn btn-action btn-view" onclick="viewUser(${user.id_user || user.id})" title="Ver">
-              <i class="fas fa-eye"></i>
-            </button>
             <button class="btn btn-action btn-edit" onclick="editUser(${user.id_user || user.id})" title="Editar">
               <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-action btn-edit" onclick="openPasswordModal(${user.id_user || user.id})" title="Cambiar Contraseña">
-              <i class="fas fa-key"></i>
             </button>
             <button class="btn btn-action btn-delete" onclick="deleteUser(${user.id_user || user.id})" title="Eliminar">
               <i class="fas fa-trash"></i>
@@ -1187,23 +682,6 @@
           </td>
         </tr>
       `).join('');
-    }
-
-    async function loadRoles() {
-      const roles = await apiCall('/roles');
-      if (!roles) return;
-
-      const selects = ['userRole', 'role-filter'];
-      selects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-          const isFilter = selectId.includes('filter');
-          select.innerHTML = isFilter ? '<option value="">Todos los roles</option>' : '<option value="">Seleccionar rol...</option>';
-          roles.forEach(role => {
-            select.innerHTML += `<option value="${role.id}">${role.name}</option>`;
-          });
-        }
-      });
     }
 
     function openAddUserModal() {
@@ -1221,12 +699,9 @@
       document.getElementById('userId').value = user.id_user || user.id;
       document.getElementById('userName').value = user.name;
       document.getElementById('userEmail').value = user.email;
-      document.getElementById('userRole').value = user.roleId || user.id_rol;
-      document.getElementById('userStatus').value = user.active ? 'true' : 'false';
       
-      // Make password fields optional for editing
+      // Make password optional for editing
       document.getElementById('userPassword').required = false;
-      document.getElementById('userPasswordConfirm').required = false;
       
       new bootstrap.Modal(document.getElementById('userModal')).show();
     }
@@ -1238,14 +713,8 @@
         return;
       }
 
-      const password = document.getElementById('userPassword').value;
-      const passwordConfirm = document.getElementById('userPasswordConfirm').value;
       const userId = document.getElementById('userId').value;
-
-      if (password && password !== passwordConfirm) {
-        showAlert('Las contraseñas no coinciden', 'danger');
-        return;
-      }
+      const password = document.getElementById('userPassword').value;
 
       if (!userId && (!password || password.length < 8)) {
         showAlert('La contraseña debe tener al menos 8 caracteres', 'danger');
@@ -1254,16 +723,14 @@
 
       const userData = {
         name: document.getElementById('userName').value,
-        email: document.getElementById('userEmail').value,
-        roleId: parseInt(document.getElementById('userRole').value),
-        active: document.getElementById('userStatus').value === 'true'
+        email: document.getElementById('userEmail').value
       };
 
       if (password) {
-        userData.password = await hashPassword(password);
+        userData.password = password;
       }
 
-      const endpoint = userId ? '/users' : '/users';
+      const endpoint = '/users';
       const method = userId ? 'PUT' : 'POST';
       
       if (userId) {
@@ -1271,51 +738,10 @@
       }
 
       const result = await apiCall(endpoint, method, userData);
-      if (result) {
+      if (result !== null) {
         showAlert(`Usuario ${userId ? 'actualizado' : 'creado'} exitosamente`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
         loadUsers();
-      }
-    }
-
-    function openPasswordModal(userId) {
-      document.getElementById('passwordUserId').value = userId;
-      document.getElementById('passwordForm').reset();
-      new bootstrap.Modal(document.getElementById('passwordModal')).show();
-    }
-
-    async function changePassword() {
-      const form = document.getElementById('passwordForm');
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      const newPassword = document.getElementById('newPassword').value;
-      const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-      if (newPassword !== confirmPassword) {
-        showAlert('Las contraseñas no coinciden', 'danger');
-        return;
-      }
-
-      if (newPassword.length < 8) {
-        showAlert('La contraseña debe tener al menos 8 caracteres', 'danger');
-        return;
-      }
-
-      const userId = document.getElementById('passwordUserId').value;
-      const hashedPassword = await hashPassword(newPassword);
-
-      const userData = {
-        id_user: parseInt(userId),
-        password: hashedPassword
-      };
-
-      const result = await apiCall('/users', 'PUT', userData);
-      if (result) {
-        showAlert('Contraseña actualizada exitosamente', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
       }
     }
 
@@ -1326,8 +752,8 @@
     }
 
     async function executeDeleteUser(id) {
-      const result = await apiCall(`/users/${id}`, 'DELETE');
-      if (result) {
+      const result = await apiCall(`/user/Delete?id=${id}`, 'POST');
+      if (result !== null) {
         showAlert('Usuario eliminado exitosamente', 'success');
         loadUsers();
       }
@@ -1339,23 +765,23 @@
       tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="loading"><div class="spinner-border spinner-border-custom" role="status"></div><p>Cargando estudiantes...</p></div></td></tr>';
 
       const students = await apiCall('/students');
-      if (!students) return;
+      if (!students || students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron estudiantes</td></tr>';
+        return;
+      }
 
       tbody.innerHTML = students.map(student => `
         <tr>
-          <td>${student.id}</td>
-          <td>${student.name}</td>
-          <td>${student.email}</td>
-          <td>${student.gradeInfo?.name || 'N/A'}</td>
-          <td>${student.groupInfo?.name || 'N/A'}</td>
+          <td>${student.id_student || student.id}</td>
+          <td>${student.student_name || student.name}</td>
+          <td>${student.email || 'N/A'}</td>
+          <td>${student.GradeInfo ? student.GradeInfo.grade : 'N/A'}</td>
+          <td>${student.GroupInfo ? student.GroupInfo.group_name : 'N/A'}</td>
           <td>
-            <button class="btn btn-action btn-view" onclick="viewStudent(${student.id})" title="Ver">
-              <i class="fas fa-eye"></i>
-            </button>
-            <button class="btn btn-action btn-edit" onclick="editStudent(${student.id})" title="Editar">
+            <button class="btn btn-action btn-edit" onclick="editStudent(${student.id_student || student.id})" title="Editar">
               <i class="fas fa-edit"></i>
             </button>
-            <button class="btn btn-action btn-delete" onclick="deleteStudent(${student.id})" title="Eliminar">
+            <button class="btn btn-action btn-delete" onclick="deleteStudent(${student.id_student || student.id})" title="Eliminar">
               <i class="fas fa-trash"></i>
             </button>
           </td>
@@ -1363,44 +789,22 @@
       `).join('');
     }
 
-    async function loadGrades() {
-      const grades = await apiCall('/s_grade');
-      if (!grades) return;
-
-      const selects = ['studentGrade', 'grade-filter'];
-      selects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-          const isFilter = selectId.includes('filter');
-          select.innerHTML = isFilter ? '<option value="">Todos los grados</option>' : '<option value="">Seleccionar grado...</option>';
-          grades.forEach(grade => {
-            select.innerHTML += `<option value="${grade.id}">${grade.name}</option>`;
-          });
-        }
-      });
-    }
-
-    async function loadGroups() {
-      const groups = await apiCall('/s_group');
-      if (!groups) return;
-
-      const selects = ['studentGroup', 'group-filter'];
-      selects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-          const isFilter = selectId.includes('filter');
-          select.innerHTML = isFilter ? '<option value="">Todos los grupos</option>' : '<option value="">Seleccionar grupo...</option>';
-          groups.forEach(group => {
-            select.innerHTML += `<option value="${group.id}">${group.name}</option>`;
-          });
-        }
-      });
-    }
-
     function openAddStudentModal() {
       document.getElementById('studentModalTitle').textContent = 'Nuevo Estudiante';
       document.getElementById('studentForm').reset();
       document.getElementById('studentId').value = '';
+      new bootstrap.Modal(document.getElementById('studentModal')).show();
+    }
+
+    async function editStudent(id) {
+      const student = await apiCall(`/students/${id}`);
+      if (!student) return;
+
+      document.getElementById('studentModalTitle').textContent = 'Editar Estudiante';
+      document.getElementById('studentId').value = student.id_student || student.id;
+      document.getElementById('studentName').value = student.student_name || student.name;
+      document.getElementById('studentEmail').value = student.email || '';
+      
       new bootstrap.Modal(document.getElementById('studentModal')).show();
     }
 
@@ -1413,25 +817,35 @@
 
       const studentId = document.getElementById('studentId').value;
       const studentData = {
-        name: document.getElementById('studentName').value,
-        email: document.getElementById('studentEmail').value,
-        gradeId: parseInt(document.getElementById('studentGrade').value),
-        groupId: parseInt(document.getElementById('studentGroup').value),
-        phone: document.getElementById('studentPhone').value,
-        birthDate: document.getElementById('studentBirthDate').value
+        student_name: document.getElementById('studentName').value,
+        email: document.getElementById('studentEmail').value
       };
 
       const endpoint = '/students';
       const method = studentId ? 'PUT' : 'POST';
       
       if (studentId) {
-        studentData.id = parseInt(studentId);
+        studentData.id_student = parseInt(studentId);
       }
 
       const result = await apiCall(endpoint, method, studentData);
-      if (result) {
+      if (result !== null) {
         showAlert(`Estudiante ${studentId ? 'actualizado' : 'creado'} exitosamente`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
+        loadStudents();
+      }
+    }
+
+    function deleteStudent(id) {
+      confirmAction = () => executeDeleteStudent(id);
+      document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar este estudiante? Esta acción no se puede deshacer.';
+      new bootstrap.Modal(document.getElementById('confirmModal')).show();
+    }
+
+    async function executeDeleteStudent(id) {
+      const result = await apiCall(`/students/Delete?id=${id}`, 'POST');
+      if (result !== null) {
+        showAlert('Estudiante eliminado exitosamente', 'success');
         loadStudents();
       }
     }
@@ -1442,13 +856,14 @@
       tbody.innerHTML = `<tr><td colspan="4" class="text-center"><div class="loading"><div class="spinner-border spinner-border-custom" role="status"></div><p>Cargando ${entity}...</p></div></td></tr>`;
 
       const endpoint = entity === 'locations' ? '/location_' : 
-                      entity === 'grades' ? '/s_grade' :
-                      entity === 'groups' ? '/s_group' :
-                      entity === 'status' ? '/status_l' :
+                      entity === 'areas' ? '/areas' :
                       `/${entity}`;
       
       const data = await apiCall(endpoint);
-      if (!data) return;
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No se encontraron ${entity}</td></tr>`;
+        return;
+      }
 
       tbody.innerHTML = data.map(item => `
         <tr>
@@ -1473,7 +888,6 @@
     async function loadAreas() { await loadGenericData('areas', 'areas-table-body'); }
     async function loadLocations() { await loadGenericData('locations', 'locations-table-body'); }
     async function loadLaboratories() { await loadGenericData('laboratories', 'laboratories-table-body'); }
-    async function loadStatus() { await loadGenericData('status', 'status-table-body'); }
 
     // Generic modal functions
     function openGenericModal(type, title) {
@@ -1490,15 +904,10 @@
     function openAddAreaModal() { openGenericModal('areas', 'Área'); }
     function openAddLocationModal() { openGenericModal('locations', 'Ubicación'); }
     function openAddLaboratoryModal() { openGenericModal('laboratories', 'Laboratorio'); }
-    function openAddGradeModal() { openGenericModal('grades', 'Grado'); }
-    function openAddGroupModal() { openGenericModal('groups', 'Grupo'); }
-    function openAddStatusModal() { openGenericModal('status', 'Estado'); }
 
     async function editGenericItem(type, id) {
       const endpoint = type === 'locations' ? '/location_' : 
-                      type === 'grades' ? '/s_grade' :
-                      type === 'groups' ? '/s_group' :
-                      type === 'status' ? '/status_l' :
+                      type === 'areas' ? '/areas' :
                       `/${type}`;
       
       const item = await apiCall(`${endpoint}/${id}`);
@@ -1509,10 +918,7 @@
         categories: 'Categoría',
         areas: 'Área',
         locations: 'Ubicación',
-        laboratories: 'Laboratorio',
-        grades: 'Grado',
-        groups: 'Grupo',
-        status: 'Estado'
+        laboratories: 'Laboratorio'
       };
 
       document.getElementById('genericModalTitle').textContent = `Editar ${titles[type]}`;
@@ -1538,9 +944,7 @@
       };
 
       const endpoint = type === 'locations' ? '/location_' : 
-                      type === 'grades' ? '/s_grade' :
-                      type === 'groups' ? '/s_group' :
-                      type === 'status' ? '/status_l' :
+                      type === 'areas' ? '/areas' :
                       `/${type}`;
       
       const method = id ? 'PUT' : 'POST';
@@ -1549,16 +953,13 @@
       }
 
       const result = await apiCall(endpoint, method, data);
-      if (result) {
+      if (result !== null) {
         const titles = {
           brands: 'Marca',
           categories: 'Categoría',
           areas: 'Área',
           locations: 'Ubicación',
-          laboratories: 'Laboratorio',
-          grades: 'Grado',
-          groups: 'Grupo',
-          status: 'Estado'
+          laboratories: 'Laboratorio'
         };
         showAlert(`${titles[type]} ${id ? 'actualizada' : 'creada'} exitosamente`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('genericModal')).hide();
@@ -1570,9 +971,6 @@
           case 'areas': loadAreas(); break;
           case 'locations': loadLocations(); break;
           case 'laboratories': loadLaboratories(); break;
-          case 'grades': loadGrades(); break;
-          case 'groups': loadGroups(); break;
-          case 'status': loadStatus(); break;
         }
       }
     }
@@ -1583,10 +981,7 @@
         categories: 'categoría',
         areas: 'área',
         locations: 'ubicación',
-        laboratories: 'laboratorio',
-        grades: 'grado',
-        groups: 'grupo',
-        status: 'estado'
+        laboratories: 'laboratorio'
       };
       
       confirmAction = () => executeDeleteGeneric(type, id);
@@ -1595,23 +990,19 @@
     }
 
     async function executeDeleteGeneric(type, id) {
-      const endpoint = type === 'locations' ? '/location_' : 
-                      type === 'grades' ? '/s_grade' :
-                      type === 'groups' ? '/s_group' :
-                      type === 'status' ? '/status_l' :
-                      `/${type}`;
+      const deleteEndpoint = type === 'locations' ? '/location_/Delete?id=' : 
+                            type === 'areas' ? '/area/Delete?id=' :
+                            type === 'brands' ? '/brand/Delete?id=' :
+                            `/${type}/Delete?id=`;
       
-      const result = await apiCall(`${endpoint}/Delete?id=${id}`, 'POST');
-      if (result) {
+      const result = await apiCall(`${deleteEndpoint}${id}`, 'POST');
+      if (result !== null) {
         const titles = {
           brands: 'Marca',
           categories: 'Categoría',
           areas: 'Área',
           locations: 'Ubicación',
-          laboratories: 'Laboratorio',
-          grades: 'Grado',
-          groups: 'Grupo',
-          status: 'Estado'
+          laboratories: 'Laboratorio'
         };
         showAlert(`${titles[type]} eliminada exitosamente`, 'success');
         
@@ -1622,22 +1013,11 @@
           case 'areas': loadAreas(); break;
           case 'locations': loadLocations(); break;
           case 'laboratories': loadLaboratories(); break;
-          case 'grades': loadGrades(); break;
-          case 'groups': loadGroups(); break;
-          case 'status': loadStatus(); break;
         }
       }
     }
 
     // Utility functions
-    async function hashPassword(password) {
-      // Simple password hashing using Web Crypto API
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password + 'salt_inventory_system');
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
       const icon = input.nextElementSibling;
@@ -1728,172 +1108,6 @@
         
         row.style.display = matchFound || searchTerm === '' ? '' : 'none';
       });
-    }
-
-    // Role and grade filters
-    document.getElementById('role-filter')?.addEventListener('change', function(e) {
-      filterTableByColumn('users-table-body', e.target.value, 3); // Role column
-    });
-
-    document.getElementById('grade-filter')?.addEventListener('change', function(e) {
-      filterTableByColumn('students-table-body', e.target.value, 3); // Grade column
-    });
-
-    document.getElementById('group-filter')?.addEventListener('change', function(e) {
-      filterTableByColumn('students-table-body', e.target.value, 4); // Group column
-    });
-
-    function filterTableByColumn(tableBodyId, filterValue, columnIndex) {
-      const tbody = document.getElementById(tableBodyId);
-      const rows = tbody.querySelectorAll('tr');
-      
-      rows.forEach(row => {
-        const cell = row.querySelectorAll('td')[columnIndex];
-        if (cell) {
-          const cellText = cell.textContent.trim();
-          const showRow = filterValue === '' || cellText.includes(filterValue);
-          row.style.display = showRow ? '' : 'none';
-        }
-      });
-    }
-
-    // View functions (placeholder implementations)
-    async function viewUser(id) {
-      const user = await apiCall(`/users/${id}`);
-      if (user) {
-        showAlert(`Usuario: ${user.name} - ${user.email}`, 'info');
-      }
-    }
-
-    async function viewStudent(id) {
-      const student = await apiCall(`/students/${id}`);
-      if (student) {
-        showAlert(`Estudiante: ${student.name} - ${student.email}`, 'info');
-      }
-    }
-
-    async function editStudent(id) {
-      const student = await apiCall(`/students/${id}`);
-      if (!student) return;
-
-      document.getElementById('studentModalTitle').textContent = 'Editar Estudiante';
-      document.getElementById('studentId').value = student.id;
-      document.getElementById('studentName').value = student.name;
-      document.getElementById('studentEmail').value = student.email;
-      document.getElementById('studentGrade').value = student.gradeId;
-      document.getElementById('studentGroup').value = student.groupId;
-      document.getElementById('studentPhone').value = student.phone || '';
-      document.getElementById('studentBirthDate').value = student.birthDate || '';
-      
-      new bootstrap.Modal(document.getElementById('studentModal')).show();
-    }
-
-    function deleteStudent(id) {
-      confirmAction = () => executeDeleteStudent(id);
-      document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar este estudiante? Esta acción no se puede deshacer.';
-      new bootstrap.Modal(document.getElementById('confirmModal')).show();
-    }
-
-    async function executeDeleteStudent(id) {
-      const result = await apiCall(`/students/Delete?id=${id}`, 'POST');
-      if (result) {
-        showAlert('Estudiante eliminado exitosamente', 'success');
-        loadStudents();
-      }
-    }
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-      // Ctrl + N for new user
-      if (e.ctrlKey && e.key === 'n') {
-        e.preventDefault();
-        const activeSection = document.querySelector('.section-content.active').id;
-        switch(activeSection) {
-          case 'users-section':
-            openAddUserModal();
-            break;
-          case 'students-section':
-            openAddStudentModal();
-            break;
-          case 'brands-section':
-            openAddBrandModal();
-            break;
-          case 'categories-section':
-            openAddCategoryModal();
-            break;
-        }
-      }
-      
-      // Escape to close modals
-      if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-          bootstrap.Modal.getInstance(modal)?.hide();
-        });
-      }
-    });
-
-    // Auto-refresh every 5 minutes
-    setInterval(() => {
-      const activeSection = document.querySelector('.nav-link.active')?.getAttribute('data-section');
-      if (activeSection && activeSection !== 'dashboard') {
-        showSection(activeSection);
-      } else if (activeSection === 'dashboard') {
-        loadDashboardData();
-      }
-    }, 300000); // 5 minutes
-
-    // Form validation enhancement
-    document.querySelectorAll('input[type="email"]').forEach(input => {
-      input.addEventListener('blur', function() {
-        const email = this.value;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (email && !emailRegex.test(email)) {
-          this.classList.add('is-invalid');
-          showAlert('Por favor ingrese un email válido', 'warning');
-        } else {
-          this.classList.remove('is-invalid');
-        }
-      });
-    });
-
-    // Password strength indicator
-    document.getElementById('userPassword')?.addEventListener('input', function() {
-      const password = this.value;
-      const strength = getPasswordStrength(password);
-      updatePasswordStrengthIndicator(strength);
-    });
-
-    function getPasswordStrength(password) {
-      let score = 0;
-      if (password.length >= 8) score++;
-      if (/[a-z]/.test(password)) score++;
-      if (/[A-Z]/.test(password)) score++;
-      if (/[0-9]/.test(password)) score++;
-      if (/[^A-Za-z0-9]/.test(password)) score++;
-      
-      return score;
-    }
-
-    function updatePasswordStrengthIndicator(strength) {
-      // This could be enhanced with a visual indicator
-      const messages = {
-        0: '',
-        1: 'Muy débil',
-        2: 'Débil',
-        3: 'Regular',
-        4: 'Fuerte',
-        5: 'Muy fuerte'
-      };
-      
-      // Could add a visual element here
-      console.log('Password strength:', messages[strength]);
-    }
-
-    // Export functionality (future enhancement)
-    function exportData(type) {
-      // Placeholder for export functionality
-      showAlert('Función de exportación disponible próximamente', 'info');
     }
   </script>
 </body>
