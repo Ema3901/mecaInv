@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Editar productos - Inventario Dashboard</title>
+  <title>Editar unidades - Inventario Dashboard</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Font Awesome -->
@@ -37,7 +37,7 @@
           <button class="btn btn-outline-secondary me-3" onclick="window.location.href='index.html'">
             <i class="fas fa-arrow-left"></i>
           </button>
-          <h1>Editar productos</h1>
+          <h1>Editar unidades</h1>
         </div>
 
         <!-- Caja de Usuario -->
@@ -60,7 +60,7 @@
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
-          <p class="mt-3">Cargando productos seleccionados...</p>
+          <p class="mt-3">Cargando unidades seleccionadas...</p>
         </div>
       </div>
 
@@ -73,7 +73,7 @@
           <div class="navigator-header">
             <h4 class="mb-0">
               <i class="fas fa-edit me-2"></i>
-              Editando producto <span id="currentProductIndex">1</span> de <span id="totalProducts">0</span>
+              Editando unidad <span id="currentProductIndex">1</span> de <span id="totalProducts">0</span>
             </h4>
           </div>
           <div class="navigator-controls">
@@ -93,52 +93,66 @@
 
       <!-- Formulario de edición -->
       <div id="editForm" class="d-none">
-        <!-- Datos del inventario -->
+        <!-- Información del producto (solo lectura) -->
         <div class="product-form-container">
           <div class="form-header">
-            <h3><i class="fas fa-box me-2"></i>Datos del producto</h3>
+            <h3><i class="fas fa-box me-2"></i>Información del producto</h3>
           </div>
           <div class="form-content">
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="nombre" class="form-label">Nombre <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="nombre" required />
+                  <label for="productName" class="form-label">Nombre</label>
+                  <input type="text" class="form-control" id="productName" readonly />
                 </div>
                 <div class="form-group">
-                  <label for="modelo" class="form-label">Modelo <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="modelo" required />
-                </div>
-                <div class="form-group">
-                  <label for="descripcion" class="form-label">Descripción <span class="required">*</span></label>
-                  <textarea class="form-control" id="descripcion" rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="categoria" class="form-label">Categoría <span class="required">*</span></label>
-                  <select class="form-select" id="categoria" required>
-                    <option value="">-- Cargando... --</option>
-                  </select>
+                  <label for="productModel" class="form-label">Modelo</label>
+                  <input type="text" class="form-control" id="productModel" readonly />
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
-                  <label for="marca" class="form-label">Marca <span class="required">*</span></label>
-                  <select class="form-select" id="marca" required>
-                    <option value="">-- Cargando... --</option>
-                  </select>
+                  <label for="productBrand" class="form-label">Marca</label>
+                  <input type="text" class="form-control" id="productBrand" readonly />
                 </div>
                 <div class="form-group">
-                  <label for="especificaciones" class="form-label">Especificaciones técnicas <span class="required">*</span></label>
-                  <textarea class="form-control" id="especificaciones" rows="3" required></textarea>
+                  <label for="productDescription" class="form-label">Descripción</label>
+                  <textarea class="form-control" id="productDescription" rows="2" readonly></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos editables de la unidad -->
+        <div class="product-form-container">
+          <div class="form-header">
+            <h3><i class="fas fa-edit me-2"></i>Datos de la unidad</h3>
+          </div>
+          <div class="form-content">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="serial_number" class="form-label">Número de serie <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="serial_number" required />
                 </div>
                 <div class="form-group">
-                  <label for="foto" class="form-label">Fotografía</label>
-                  <input type="file" class="form-control" id="foto" accept="image/*" />
-                  <div id="currentPhotoInfo" class="mt-2 text-muted"></div>
+                  <label for="internal_code" class="form-label">Código de etiqueta <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="internal_code" required />
                 </div>
                 <div class="form-group">
-                  <label for="condicion" class="form-label">Condición <span class="required">*</span></label>
-                  <select class="form-select" id="condicion" required>
+                  <label for="observations" class="form-label">Observaciones</label>
+                  <textarea class="form-control" id="observations" rows="3"></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="notes" class="form-label">Notas</label>
+                  <textarea class="form-control" id="notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="fk_status_label" class="form-label">Estado/Condición</label>
+                  <select class="form-select" id="fk_status_label">
                     <option value="">-- Cargando... --</option>
                   </select>
                 </div>
@@ -147,14 +161,41 @@
           </div>
         </div>
 
-        <!-- Unidades del producto -->
-        <div class="product-form-container" id="unitsSection">
+        <!-- Asignaciones -->
+        <div class="product-form-container">
           <div class="form-header">
-            <h3><i class="fas fa-boxes me-2"></i>Unidades del producto</h3>
+            <h3><i class="fas fa-user-tag me-2"></i>Asignaciones</h3>
           </div>
           <div class="form-content">
-            <div id="unitsContainer">
-              <!-- Las unidades se cargarán aquí dinámicamente -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="fk_guardian" class="form-label">Resguardante</label>
+                  <select class="form-select" id="fk_guardian">
+                    <option value="">-- Cargando... --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="fk_area" class="form-label">Área</label>
+                  <select class="form-select" id="fk_area">
+                    <option value="">-- Cargando... --</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="fk_location" class="form-label">Edificio</label>
+                  <select class="form-select" id="fk_location">
+                    <option value="">-- Cargando... --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="fk_laboratory" class="form-label">Laboratorio</label>
+                  <select class="form-select" id="fk_laboratory">
+                    <option value="">-- Cargando... --</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -163,11 +204,11 @@
         <div class="product-form-container">
           <div class="form-content">
             <div class="form-actions">
-              <button type="button" class="btn btn-success" id="saveProduct">
-                <i class="fas fa-save me-2"></i>Guardar cambios
+              <button type="button" class="btn btn-success" id="saveCurrentUnit">
+                <i class="fas fa-save me-2"></i>Guardar unidad actual
               </button>
-              <button type="button" class="btn btn-info ms-3" id="saveAndNext">
-                <i class="fas fa-save me-2"></i>Guardar y siguiente
+              <button type="button" class="btn btn-info ms-3" id="saveAllUnits">
+                <i class="fas fa-save me-2"></i>Guardar todas las unidades
               </button>
               <button type="button" class="btn btn-secondary ms-3" onclick="window.location.href='index.html'">
                 <i class="fas fa-times me-2"></i>Cancelar
@@ -181,8 +222,8 @@
       <div id="noProductsSelected" class="d-none">
         <div class="alert alert-warning text-center">
           <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-          <h4>No hay productos seleccionados</h4>
-          <p>No se encontraron productos seleccionados para editar.</p>
+          <h4>No hay unidades seleccionadas</h4>
+          <p>No se encontraron unidades seleccionadas para editar.</p>
           <a href="index.html" class="btn btn-primary">
             <i class="fas fa-arrow-left me-2"></i>Volver al inventario
           </a>
@@ -200,8 +241,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <!--<script src="js/mobile.js"></script>-->
-  <script src="js/script.js"></script>
-  <script src="js/logout.js"></script>
   <script src="js/session-manager.js"></script>
   <script src="js/editar-producto.js"></script>
 

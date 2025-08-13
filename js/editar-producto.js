@@ -1,7 +1,6 @@
 // Configuración de endpoints
 const API_BASE = `https://healtyapi.bsite.net/api`;
 const selectors = {
-  categoria: { url: `${API_BASE}/categories`, id: 'id_category', name: 'category_name'},
   marca: { url: `${API_BASE}/brands`, id: 'id_brand', name: 'brand_name' },
   area: { url: `${API_BASE}/areas`, id: 'id_area', name: 'area_name' },
   ubicacion: { url: `${API_BASE}/location_`, id: 'id_location', name: 'location_name' },
@@ -10,27 +9,31 @@ const selectors = {
 };
 
 // Variables globales
-let selectedProductIds = [];
-let currentProductIndex = 0;
-let productsData = [];
-let defaultPendienteId = null;
-let defaultEstadoId = null;
+let selectedUnitIds = [];
+let currentUnitIndex = 0;
+let unitsData = [];
+let allProductUnits = []; // Cache para todas las unidades
 
 // Funciones de utilidad
 async function fetchJSON(url) {
+  console.log(`🌐 Haciendo petición a: ${url}`);
   try {
     const res = await fetch(url);
+    console.log(`📡 Respuesta recibida de ${url}:`, res.status, res.statusText);
     if (!res.ok) throw new Error(`Error ${res.status} al pedir ${url}`);
-    return res.json();
+    const data = await res.json();
+    console.log(`✅ Datos obtenidos de ${url}:`, data);
+    return data;
   } catch (error) {
-    console.error('Error en fetchJSON:', error);
+    console.error(`❌ Error en fetchJSON para ${url}:`, error);
     throw error;
   }
 }
 
 async function fillSelect(selectEl, endpointInfo, placeholder = '--Selecciona--') {
+  console.log(`🔄 Llenando select para:`, endpointInfo.url);
   if (!selectEl) {
-    console.error('Select element no encontrado');
+    console.error('❌ Select element no encontrado');
     return;
   }
   
@@ -38,6 +41,7 @@ async function fillSelect(selectEl, endpointInfo, placeholder = '--Selecciona--'
     const data = await fetchJSON(endpointInfo.url);
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     if (Array.isArray(data) && data.length > 0) {
+      console.log(`📋 Agregando ${data.length} opciones al select`);
       data.forEach(item => {
         const id = item[endpointInfo.id];
         const name = item[endpointInfo.name];
@@ -48,16 +52,21 @@ async function fillSelect(selectEl, endpointInfo, placeholder = '--Selecciona--'
           selectEl.appendChild(opt);
         }
       });
+      console.log(`✅ Select llenado exitosamente para ${endpointInfo.url}`);
+    } else {
+      console.warn(`⚠️ No hay datos para ${endpointInfo.url}`);
     }
   } catch (e) {
+    console.error(`❌ Error llenando select de ${endpointInfo.url}:`, e);
     selectEl.innerHTML = `<option value="">Error cargando</option>`;
     showMessage(`No se pudieron cargar datos de ${endpointInfo.url}: ${e.message}`, 'error');
   }
 }
 
 async function fillGuardians(selectEl) {
+  console.log('🔄 Cargando guardianes...');
   if (!selectEl) {
-    console.error('Guardian select element no encontrado');
+    console.error('❌ Guardian select element no encontrado');
     return;
   }
   
@@ -65,6 +74,7 @@ async function fillGuardians(selectEl) {
     const data = await fetchJSON(`${API_BASE}/users`);
     selectEl.innerHTML = `<option value="">--Selecciona--</option>`;
     if (Array.isArray(data) && data.length > 0) {
+      let guardianCount = 0;
       data.forEach(u => {
         const rol = u?.RoleInfo?.rol || '';
         if (rol.toLowerCase() === 'alumno') return;
@@ -75,19 +85,23 @@ async function fillGuardians(selectEl) {
           opt.value = id;
           opt.textContent = name;
           selectEl.appendChild(opt);
+          guardianCount++;
         }
       });
+      console.log(`✅ ${guardianCount} guardianes agregados`);
     }
   } catch (e) {
+    console.error('❌ Error cargando guardianes:', e);
     selectEl.innerHTML = `<option value="">Error cargando guardianes</option>`;
     showMessage(`Error cargando guardianes: ${e.message}`, 'error');
   }
 }
 
 function showMessage(msg, type = 'info') {
+  console.log(`📢 Mensaje mostrado (${type}): ${msg}`);
   const messagesContainer = document.getElementById('messages');
   if (!messagesContainer) {
-    console.error('Messages container no encontrado');
+    console.error('❌ Messages container no encontrado');
     return;
   }
   
@@ -124,120 +138,110 @@ function showMessage(msg, type = 'info') {
   messagesContainer.appendChild(div);
 }
 
-// Cargar valores por defecto para pendiente y estado
-async function loadDefaults() {
+// Cargar todas las unidades de producto
+async function loadAllProductUnits() {
+  console.log('🔄 Cargando todas las unidades de producto...');
   try {
-    // Cargar pendientes para obtener "realizado"
-    const pendientesData = await fetchJSON(`${API_BASE}/pendings`);
-    if (Array.isArray(pendientesData)) {
-      const realizadoItem = pendientesData.find(item => 
-        item.status_p && item.status_p.toLowerCase().includes('realizado')
-      );
-      if (realizadoItem) {
-        defaultPendienteId = realizadoItem.id_pending;
-      }
+    if (allProductUnits.length === 0) {
+      console.log('📋 Obteniendo todas las product_units desde la API...');
+      allProductUnits = await fetchJSON(`${API_BASE}/product_units`);
+      console.log(`✅ ${allProductUnits.length} unidades obtenidas del servidor`);
     }
-
-    // Cargar estados para obtener "activo"
-    const estadosData = await fetchJSON(`${API_BASE}/disabled_`);
-    if (Array.isArray(estadosData)) {
-      const activoItem = estadosData.find(item => 
-        item.status_d && item.status_d.toLowerCase().includes('activo')
-      );
-      if (activoItem) {
-        defaultEstadoId = activoItem.id_disable;
-      }
-    }
+    return allProductUnits;
   } catch (error) {
-    console.error('Error cargando valores por defecto:', error);
+    console.error('❌ Error cargando todas las unidades:', error);
+    throw error;
   }
 }
 
-// Cargar datos de un producto específico
-async function loadProductData(productId) {
+// Cargar datos de una unidad específica
+async function loadUnitData(unitId) {
+  console.log(`🔄 Cargando datos de la unidad ID: ${unitId}`);
   try {
-    // Cargar datos del inventario
-    const inventoryData = await fetchJSON(`${API_BASE}/inventories/${productId}`);
+    const allUnits = await loadAllProductUnits();
+    const unitData = allUnits.find(unit => unit.id_unit === parseInt(unitId));
     
-    // Cargar unidades del producto - FIX: cambiar la URL para que funcione
-    let unitsData = [];
-    try {
-      unitsData = await fetchJSON(`${API_BASE}/product_units/byProduct/${productId}`);
-    } catch (error) {
-      console.warn(`No se pudieron cargar unidades para el producto ${productId}:`, error);
-      // Intentar con endpoint alternativo
-      try {
-        const allUnits = await fetchJSON(`${API_BASE}/product_units`);
-        unitsData = Array.isArray(allUnits) ? allUnits.filter(unit => unit.fk_inventory === parseInt(productId)) : [];
-      } catch (error2) {
-        console.error('Error cargando unidades:', error2);
-        unitsData = [];
-      }
+    if (!unitData) {
+      throw new Error(`No se encontró la unidad con ID ${unitId}`);
     }
     
-    return {
-      inventory: inventoryData,
-      units: Array.isArray(unitsData) ? unitsData : []
-    };
+    console.log(`✅ Unidad encontrada:`, unitData);
+    return unitData;
   } catch (error) {
-    throw new Error(`Error cargando producto ${productId}: ${error.message}`);
+    console.error(`❌ Error cargando unidad ${unitId}:`, error);
+    throw error;
   }
 }
 
-// Cargar todos los productos seleccionados
-async function loadAllProducts() {
+// Cargar todas las unidades seleccionadas
+async function loadAllUnits() {
+  console.log('🚀 Iniciando carga de todas las unidades...');
   try {
     const loadingContainer = document.getElementById('loadingContainer');
     const noProductsDiv = document.getElementById('noProductsSelected');
     
     if (!loadingContainer || !noProductsDiv) {
-      console.error('Contenedores de carga no encontrados');
+      console.error('❌ Contenedores de carga no encontrados');
       return;
     }
 
     // Obtener IDs desde localStorage
     const storedIds = localStorage.getItem('selectedProducts');
+    console.log('🗄️ Datos en localStorage:', storedIds);
+    
     if (!storedIds) {
+      console.warn('⚠️ No hay unidades seleccionadas en localStorage');
       loadingContainer.classList.add('d-none');
       noProductsDiv.classList.remove('d-none');
       return;
     }
     
     try {
-      selectedProductIds = JSON.parse(storedIds);
+      selectedUnitIds = JSON.parse(storedIds);
+      console.log('✅ IDs parseados exitosamente:', selectedUnitIds);
     } catch (error) {
-      console.error('Error parseando IDs almacenados:', error);
-      selectedProductIds = [];
+      console.error('❌ Error parseando IDs almacenados:', error);
+      selectedUnitIds = [];
     }
     
-    if (!Array.isArray(selectedProductIds) || selectedProductIds.length === 0) {
+    if (!Array.isArray(selectedUnitIds) || selectedUnitIds.length === 0) {
+      console.warn('⚠️ Array de IDs vacío o inválido');
       loadingContainer.classList.add('d-none');
       noProductsDiv.classList.remove('d-none');
       return;
     }
 
-    // Cargar datos de todos los productos
-    productsData = [];
-    for (const productId of selectedProductIds) {
+    console.log(`📊 Cargando ${selectedUnitIds.length} unidades...`);
+    
+    // Cargar datos de todas las unidades
+    unitsData = [];
+    for (let i = 0; i < selectedUnitIds.length; i++) {
+      const unitId = selectedUnitIds[i];
+      console.log(`🔄 Cargando unidad ${i + 1}/${selectedUnitIds.length}: ID ${unitId}`);
       try {
-        const productData = await loadProductData(productId);
-        productsData.push({
-          id: productId,
-          ...productData
+        const unitData = await loadUnitData(unitId);
+        unitsData.push({
+          id: unitId,
+          unit: unitData
         });
+        console.log(`✅ Unidad ${unitId} agregada a unitsData`);
       } catch (error) {
-        console.error(`Error cargando producto ${productId}:`, error);
-        showMessage(`Error cargando producto ${productId}: ${error.message}`, 'error');
+        console.error(`❌ Error cargando unidad ${unitId}:`, error);
+        showMessage(`Error cargando unidad ${unitId}: ${error.message}`, 'error');
       }
     }
 
-    if (productsData.length === 0) {
+    console.log(`📊 Total unidades cargadas: ${unitsData.length}`);
+
+    if (unitsData.length === 0) {
+      console.warn('⚠️ No se pudo cargar ninguna unidad');
       loadingContainer.classList.add('d-none');
       noProductsDiv.classList.remove('d-none');
       return;
     }
 
     // Mostrar interfaz de edición
+    console.log('🎨 Mostrando interfaz de edición...');
     loadingContainer.classList.add('d-none');
     const navigator = document.getElementById('productNavigator');
     const editForm = document.getElementById('editForm');
@@ -248,415 +252,484 @@ async function loadAllProducts() {
     // Actualizar navegador
     updateNavigator();
     
-    // Mostrar primer producto
-    await showProduct(0);
+    // Mostrar primera unidad
+    await showUnit(0);
+    console.log('✅ Carga completa de unidades finalizada');
     
   } catch (error) {
-    console.error('Error general cargando productos:', error);
-    showMessage(`Error general cargando productos: ${error.message}`, 'error');
+    console.error('❌ Error general cargando unidades:', error);
+    showMessage(`Error general cargando unidades: ${error.message}`, 'error');
   }
 }
 
-// Actualizar el navegador de productos
+// Actualizar el navegador de unidades
 function updateNavigator() {
+  console.log('🔄 Actualizando navegador...');
   const totalElement = document.getElementById('totalProducts');
   const currentElement = document.getElementById('currentProductIndex');
   const prevBtn = document.getElementById('prevProduct');
   const nextBtn = document.getElementById('nextProduct');
   
-  if (totalElement) totalElement.textContent = productsData.length;
-  if (currentElement) currentElement.textContent = currentProductIndex + 1;
+  if (totalElement) totalElement.textContent = unitsData.length;
+  if (currentElement) currentElement.textContent = currentUnitIndex + 1;
   
   // Actualizar botones de navegación
-  if (prevBtn) prevBtn.disabled = currentProductIndex === 0;
-  if (nextBtn) nextBtn.disabled = currentProductIndex === productsData.length - 1;
+  if (prevBtn) prevBtn.disabled = currentUnitIndex === 0;
+  if (nextBtn) nextBtn.disabled = currentUnitIndex === unitsData.length - 1;
   
-  // Actualizar info del producto actual
-  if (productsData[currentProductIndex]) {
-    const currentProduct = productsData[currentProductIndex];
+  // Actualizar info de la unidad actual
+  if (unitsData[currentUnitIndex]) {
+    const currentUnit = unitsData[currentUnitIndex];
     const idElement = document.getElementById('currentProductId');
     const nameElement = document.getElementById('currentProductName');
     
-    if (idElement) idElement.textContent = currentProduct.id;
-    if (nameElement) nameElement.textContent = currentProduct.inventory?.name || '-';
+    if (idElement) idElement.textContent = currentUnit.id;
+    if (nameElement) {
+      const displayName = currentUnit.unit?.ProductInfo?.name || 
+                         currentUnit.unit?.serial_number || 
+                         `Unidad ${currentUnit.id}`;
+      nameElement.textContent = displayName;
+    }
+    
+    // Actualizar título principal
+    const mainTitle = document.querySelector('h1') || document.querySelector('.card-header h5');
+    if (mainTitle) {
+      mainTitle.innerHTML = `<i class="fas fa-edit me-2"></i>Editando unidad ${currentUnitIndex + 1} de ${unitsData.length}`;
+    }
   }
+  console.log('✅ Navegador actualizado');
 }
 
-// Mostrar un producto específico
-async function showProduct(index) {
-  if (index < 0 || index >= productsData.length) return;
+// Mostrar una unidad específica
+async function showUnit(index) {
+  console.log(`🔄 Mostrando unidad en índice: ${index}`);
+  if (index < 0 || index >= unitsData.length) {
+    console.error(`❌ Índice ${index} fuera de rango (0-${unitsData.length - 1})`);
+    return;
+  }
   
-  currentProductIndex = index;
-  const productData = productsData[index];
-  const inventory = productData.inventory;
-  const units = productData.units;
+  currentUnitIndex = index;
+  const unitData = unitsData[index];
+  const unit = unitData.unit;
+  
+  console.log('🔍 Datos de unidad a mostrar:', unit);
   
   // Limpiar mensajes
   const messagesContainer = document.getElementById('messages');
   if (messagesContainer) messagesContainer.innerHTML = '';
   
-  // Llenar datos del inventario
-  const campos = [
-    { id: 'nombre', value: inventory?.name || '' },
-    { id: 'modelo', value: inventory?.model || '' },
-    { id: 'descripcion', value: inventory?.description || '' },
-    { id: 'especificaciones', value: inventory?.specs || '' },
-    { id: 'categoria', value: inventory?.fk_category || '' },
-    { id: 'marca', value: inventory?.fk_brand || '' },
-    { id: 'condicion', value: inventory?.fk_status_label || '' }
-  ];
-  
-  campos.forEach(campo => {
-    const element = document.getElementById(campo.id);
-    if (element) element.value = campo.value;
-  });
-  
-  // Mostrar info de foto actual
-  const photoInfo = document.getElementById('currentPhotoInfo');
-  if (photoInfo) {
-    if (inventory?.picture) {
-      photoInfo.innerHTML = `<i class="fas fa-image me-2"></i>Foto actual: ${inventory.picture}`;
-    } else {
-      photoInfo.innerHTML = `<i class="fas fa-image me-2"></i>Sin foto`;
-    }
+  // Mostrar información del producto (solo lectura desde ProductInfo)
+  if (unit.ProductInfo) {
+    console.log('📋 Mostrando datos del producto desde ProductInfo');
+    const productFields = [
+      { id: 'productName', value: unit.ProductInfo.name || 'N/A' },
+      { id: 'productModel', value: unit.ProductInfo.model || 'N/A' },
+      { id: 'productDescription', value: unit.ProductInfo.description || 'N/A' },
+      { id: 'productBrand', value: unit.ProductInfo.CategoryInfo?.brand_name || 'N/A' }
+    ];
+    
+    productFields.forEach(field => {
+      const element = document.getElementById(field.id);
+      if (element) {
+        if (element.tagName.toLowerCase() === 'input' || element.tagName.toLowerCase() === 'textarea') {
+          element.value = field.value;
+          element.readOnly = true; // Hacer campos de solo lectura
+        } else {
+          element.textContent = field.value;
+        }
+        console.log(`✅ Campo ${field.id} establecido: ${field.value}`);
+      }
+    });
   }
   
-  // Cargar unidades
-  await loadUnits(units);
+  // Llenar campos editables de la unidad
+  console.log('📋 Llenando campos editables...');
+  const editableFields = [
+    { id: 'serial_number', value: unit.serial_number || '' },
+    { id: 'internal_code', value: unit.internal_code || '' },
+    { id: 'observations', value: unit.observations || '' },
+    { id: 'notes', value: unit.notes || '' }
+  ];
+  
+  editableFields.forEach(field => {
+    const element = document.getElementById(field.id);
+    if (element) {
+      element.value = field.value;
+      element.readOnly = false; // Asegurar que son editables
+      console.log(`✅ Campo ${field.id} establecido: ${field.value}`);
+    } else {
+      console.warn(`⚠️ No se encontró elemento: ${field.id}`);
+    }
+  });
+  
+  // Cargar y establecer valores de los selects
+  console.log('🔄 Cargando selects...');
+  await loadUnitSelects(unit);
   
   // Actualizar navegador
   updateNavigator();
+  
+  console.log(`✅ Unidad ${unitData.id} mostrada correctamente`);
 }
 
-// Cargar unidades en el formulario
-async function loadUnits(units) {
-  const container = document.getElementById('unitsContainer');
-  if (!container) {
-    console.error('Units container no encontrado');
-    return;
-  }
+// Cargar selects para la unidad actual
+async function loadUnitSelects(unit) {
+  console.log('🔄 Cargando selects para la unidad...');
   
-  container.innerHTML = '';
+  const selectElements = {
+    guardian: document.getElementById('fk_guardian'),
+    area: document.getElementById('fk_area'),
+    location: document.getElementById('fk_location'),
+    lab: document.getElementById('fk_laboratory'),
+    status: document.getElementById('fk_status_label')
+  };
   
-  // FIX: Verificar que units sea un array y tenga elementos
-  if (!Array.isArray(units) || units.length === 0) {
-    container.innerHTML = `
-      <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        Este producto no tiene unidades asociadas.
-      </div>
-    `;
-    return;
-  }
-  
-  for (let i = 0; i < units.length; i++) {
-    const unit = units[i];
-    const div = document.createElement('div');
-    div.className = 'unit-block card mb-4';
-    div.setAttribute('data-unit-id', unit.id_product_unit);
-    
-    div.innerHTML = `
-      <div class="card-header">
-        <h5 class="mb-0">
-          <i class="fas fa-cube me-2"></i>
-          Unidad ${i + 1} - ID: ${unit.id_product_unit}
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group mb-3">
-              <label class="form-label">Serial <span class="required">*</span></label>
-              <input type="text" class="form-control" name="serial" value="${unit.serial_number || ''}" required />
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Código Interno <span class="required">*</span></label>
-              <input type="text" class="form-control" name="codigo" value="${unit.internal_code || ''}" required />
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Observación</label>
-              <input type="text" class="form-control" name="observacion" value="${unit.observations || ''}" />
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Anotaciones</label>
-              <input type="text" class="form-control" name="anotacion" value="${unit.notes || ''}" />
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group mb-3">
-              <label class="form-label">Etiqueta física</label>
-              <select class="form-select" name="label">
-                <option value="bien" ${unit.fk_status_label === 1 ? 'selected' : ''}>Bien</option>
-                <option value="no" ${unit.fk_status_label === 2 ? 'selected' : ''}>No</option>
-                <option value="dañada" ${unit.fk_status_label === 3 ? 'selected' : ''}>Dañada</option>
-              </select>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Resguardante <span class="required">*</span></label>
-              <select class="form-select guardian-select" name="resguardante" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Área <span class="required">*</span></label>
-              <select class="form-select area-select" name="area" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-            <div class="form-group mb-3">
-              <label class="form-label">Ubicación <span class="required">*</span></label>
-              <select class="form-select location-select" name="ubicacion" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group mb-3">
-              <label class="form-label">Laboratorio <span class="required">*</span></label>
-              <select class="form-select lab-select" name="laboratorio" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group mb-3">
-              <label class="form-label">Condición <span class="required">*</span></label>
-              <select class="form-select status-select" name="condicion" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(div);
-  }
-  
-  // Llenar selects de las unidades
-  const guardianSelects = container.querySelectorAll('.guardian-select');
-  const areaSelects = container.querySelectorAll('.area-select');
-  const locationSelects = container.querySelectorAll('.location-select');
-  const labSelects = container.querySelectorAll('.lab-select');
-  const statusSelects = container.querySelectorAll('.status-select');
-  
-  // FIX: Usar Promise.all para cargar todos los selects simultáneamente
   try {
+    // Cargar todos los selects en paralelo
     await Promise.all([
-      ...Array.from(guardianSelects).map(sel => fillGuardians(sel)),
-      ...Array.from(areaSelects).map(sel => fillSelect(sel, selectors.area)),
-      ...Array.from(locationSelects).map(sel => fillSelect(sel, selectors.ubicacion)),
-      ...Array.from(labSelects).map(sel => fillSelect(sel, selectors.laboratorio)),
-      ...Array.from(statusSelects).map(sel => fillSelect(sel, selectors.condicion))
+      selectElements.guardian ? fillGuardians(selectElements.guardian) : Promise.resolve(),
+      selectElements.area ? fillSelect(selectElements.area, selectors.area) : Promise.resolve(),
+      selectElements.location ? fillSelect(selectElements.location, selectors.ubicacion) : Promise.resolve(),
+      selectElements.lab ? fillSelect(selectElements.lab, selectors.laboratorio) : Promise.resolve(),
+      selectElements.status ? fillSelect(selectElements.status, selectors.condicion) : Promise.resolve()
     ]);
-  } catch (error) {
-    console.error('Error cargando selects de unidades:', error);
-  }
-  
-  // Seleccionar valores actuales después de cargar los selects
-  setTimeout(() => {
-    units.forEach((unit, index) => {
-      const unitBlock = container.children[index];
-      if (unitBlock) {
-        const guardianSelect = unitBlock.querySelector('.guardian-select');
-        const areaSelect = unitBlock.querySelector('.area-select');
-        const locationSelect = unitBlock.querySelector('.location-select');
-        const labSelect = unitBlock.querySelector('.lab-select');
-        const statusSelect = unitBlock.querySelector('.status-select');
-        
-        if (guardianSelect && unit.fk_guardian) guardianSelect.value = unit.fk_guardian;
-        if (areaSelect && unit.fk_area) areaSelect.value = unit.fk_area;
-        if (locationSelect && unit.fk_location) locationSelect.value = unit.fk_location;
-        if (labSelect && unit.fk_laboratory) labSelect.value = unit.fk_laboratory;
-        if (statusSelect && unit.fk_status_label) statusSelect.value = unit.fk_status_label;
-      }
-    });
-  }, 1000);
-}
-
-// Guardar producto actual
-async function saveCurrentProduct() {
-  try {
-    if (!productsData[currentProductIndex]) {
-      showMessage('No hay producto actual para guardar.', 'error');
-      return false;
-    }
     
-    const currentProduct = productsData[currentProductIndex];
+    console.log('✅ Todos los selects cargados, estableciendo valores...');
     
-    // Recopilar datos del inventario
-    const inventoryData = {
-      id_product: parseInt(currentProduct.id),
-      name: document.getElementById('nombre')?.value?.trim() || '',
-      model: document.getElementById('modelo')?.value?.trim() || '',
-      description: document.getElementById('descripcion')?.value?.trim() || '',
-      specs: document.getElementById('especificaciones')?.value?.trim() || '',
-      fk_category: parseInt(document.getElementById('categoria')?.value) || null,
-      fk_brand: parseInt(document.getElementById('marca')?.value) || null,
-      fk_status_label: parseInt(document.getElementById('condicion')?.value) || null
+    // Extraer valores usando solo los IDs de las relaciones
+    const unitValues = {
+      fk_guardian: unit.GuardianInfo?.id_user || unit.fk_guardian || null,
+      fk_area: unit.AreaInfo?.id_area || unit.fk_area || null,
+      fk_location: unit.LocationInfo?.id_location || unit.fk_location || null,
+      fk_laboratory: unit.LabInfo?.id_lab || unit.fk_laboratory || null,
+      fk_status_label: unit.StatusLabelInfo?.id_status_label || unit.fk_status_label || null
     };
     
-    // Manejar foto si se seleccionó una nueva
-    const fotoInput = document.getElementById('foto');
-    if (fotoInput && fotoInput.files[0]) {
-      inventoryData.picture = fotoInput.files[0].name;
-    }
+    console.log('🔍 Estructura de unit para debugging:', {
+      GuardianInfo: unit.GuardianInfo,
+      AreaInfo: unit.AreaInfo,
+      LocationInfo: unit.LocationInfo,
+      LabInfo: unit.LabInfo,
+      StatusLabelInfo: unit.StatusLabelInfo,
+      fk_fields: {
+        fk_guardian: unit.fk_guardian,
+        fk_area: unit.fk_area,
+        fk_location: unit.fk_location,
+        fk_laboratory: unit.fk_laboratory,
+        fk_status_label: unit.fk_status_label
+      }
+    });
     
-    // Validar datos del inventario
-    if (!inventoryData.name || !inventoryData.model || !inventoryData.description || 
-        !inventoryData.specs || !inventoryData.fk_category || !inventoryData.fk_brand || 
-        !inventoryData.fk_status_label) {
-      showMessage('Faltan datos obligatorios del producto.', 'error');
+    // Establecer valores después de un pequeño delay
+    setTimeout(() => {
+      console.log('🔄 Estableciendo valores en selects...');
+      console.log('🔍 Valores extraídos para selects:', unitValues);
+      
+      // Mapeo correcto de elementos a valores
+      const selectMapping = {
+        guardian: unitValues.fk_guardian,
+        area: unitValues.fk_area,
+        location: unitValues.fk_location,
+        lab: unitValues.fk_laboratory,
+        status: unitValues.fk_status_label
+      };
+      
+      Object.entries(selectElements).forEach(([key, element]) => {
+        if (element) {
+          const value = selectMapping[key];
+          if (value) {
+            element.value = value;
+            console.log(`✅ ${key} select establecido: ${value}`);
+          } else {
+            console.warn(`⚠️ No hay valor para ${key}, valor disponible:`, value);
+          }
+        } else {
+          console.warn(`⚠️ Elemento ${key} no encontrado en DOM`);
+        }
+      });
+      
+      console.log('✅ Valores establecidos en selects');
+    }, 500);
+    
+  } catch (error) {
+    console.error('❌ Error cargando selects:', error);
+  }
+}
+
+// Función mejorada para guardar unidad actual
+async function saveCurrentUnit() {
+  console.log('💾 Guardando unidad actual...');
+  try {
+    if (!unitsData[currentUnitIndex]) {
+      showMessage('No hay unidad actual para guardar.', 'error');
       return false;
     }
     
-    // Guardar inventario
-    const inventoryResponse = await fetch(`${API_BASE}/inventories`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inventoryData)
+    const currentUnit = unitsData[currentUnitIndex];
+    const unitId = currentUnit.id;
+    const originalUnit = currentUnit.unit;
+    
+    // Función helper para limpiar valores
+    function cleanValue(value, type = 'string') {
+      if (value === null || value === undefined || value === 'N/A' || value === '') {
+        return type === 'number' ? null : '';
+      }
+      
+      if (type === 'number') {
+        const num = parseInt(value);
+        return isNaN(num) ? null : num;
+      }
+      
+      return typeof value === 'string' ? value.trim() : value;
+    }
+    
+    // Obtener valores de los campos del DOM
+    const serialNumber = document.getElementById('serial_number')?.value;
+    const internalCode = document.getElementById('internal_code')?.value;
+    const observations = document.getElementById('observations')?.value;
+    const notes = document.getElementById('notes')?.value;
+    const statusLabel = document.getElementById('fk_status_label')?.value;
+    const guardian = document.getElementById('fk_guardian')?.value;
+    const area = document.getElementById('fk_area')?.value;
+    const location = document.getElementById('fk_location')?.value;
+    const laboratory = document.getElementById('fk_laboratory')?.value;
+    
+    // Construir objeto con datos limpios
+    const unitData = {
+      id_unit: parseInt(unitId),
+      
+      // Campos editables - limpiar valores
+      serial_number: cleanValue(serialNumber) || null,
+      internal_code: cleanValue(internalCode) || null,
+      observations: cleanValue(observations),
+      notes: cleanValue(notes),
+      
+      // Foreign keys - convertir a números o null
+      fk_status_label: cleanValue(statusLabel, 'number'),
+      fk_guardian: cleanValue(guardian, 'number'),
+      fk_area: cleanValue(area, 'number'),
+      fk_location: cleanValue(location, 'number'),
+      fk_laboratory: cleanValue(laboratory, 'number'),
+      
+      // Mantener campos no editables
+      fk_product: originalUnit.fk_product,
+      status: originalUnit.status,
+      registration_date: originalUnit.registration_date
+    };
+    
+    // Remover campos null/undefined para evitar problemas con la API
+    const cleanedData = {};
+    Object.keys(unitData).forEach(key => {
+      if (unitData[key] !== undefined) {
+        cleanedData[key] = unitData[key];
+      }
     });
     
-    if (!inventoryResponse.ok) {
-      throw new Error(`Error actualizando inventario: HTTP ${inventoryResponse.status}`);
+    console.log('🔍 Datos originales vs limpiados:');
+    console.log('Original:', {
+      serial_number: serialNumber,
+      internal_code: internalCode,
+      fk_status_label: statusLabel,
+      fk_guardian: guardian,
+      fk_area: area,
+      fk_location: location,
+      fk_laboratory: laboratory
+    });
+    console.log('Limpiados:', cleanedData);
+    
+    // Validar campos obligatorios solo si tienen contenido real
+    if (!cleanedData.internal_code) {
+      showMessage('El código interno es obligatorio', 'error');
+      return false;
     }
     
-    // Guardar unidades
-    const unitsContainer = document.getElementById('unitsContainer');
-    if (unitsContainer) {
-      const unitBlocks = unitsContainer.querySelectorAll('.unit-block');
+    console.log('📤 Enviando datos de unidad:', cleanedData);
+    
+    // Enviar PUT request
+    const response = await fetch(`${API_BASE}/product_units/${unitId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(cleanedData)
+    });
+    
+    console.log('📡 Status de respuesta:', response.status);
+    console.log('📡 Headers de respuesta:', Object.fromEntries([...response.headers.entries()]));
+    
+    if (!response.ok) {
+      let errorMessage;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || `Error ${response.status}`;
+        console.log('❌ Error response data:', errorData);
+      } catch {
+        errorMessage = await response.text();
+        console.log('❌ Error response text:', errorMessage);
+      }
+      throw new Error(errorMessage);
+    }
+    
+    // Manejar respuesta
+    let responseData = null;
+    const contentType = response.headers.get('content-type');
+    
+    if (response.status === 204) {
+      // No Content - actualización exitosa sin cuerpo de respuesta
+      console.log('✅ Respuesta 204 - Actualización exitosa sin contenido');
+      responseData = { success: true, message: 'Actualización completada' };
+    } else if (contentType && contentType.includes('application/json')) {
+      const responseText = await response.text();
+      console.log('📄 Texto de respuesta:', responseText);
       
-      for (const unitBlock of unitBlocks) {
-        const unitId = unitBlock.getAttribute('data-unit-id');
-        
-        const unitData = {
-          id_product_unit: parseInt(unitId),
-          serial_number: unitBlock.querySelector('[name="serial"]')?.value?.trim() || '',
-          internal_code: unitBlock.querySelector('[name="codigo"]')?.value?.trim() || '',
-          observations: unitBlock.querySelector('[name="observacion"]')?.value?.trim() || '',
-          notes: unitBlock.querySelector('[name="anotacion"]')?.value?.trim() || '',
-          fk_status_label: parseInt(unitBlock.querySelector('[name="label"]')?.value) || 1,
-          fk_guardian: parseInt(unitBlock.querySelector('[name="resguardante"]')?.value) || null,
-          fk_area: parseInt(unitBlock.querySelector('[name="area"]')?.value) || null,
-          fk_location: parseInt(unitBlock.querySelector('[name="ubicacion"]')?.value) || null,
-          fk_laboratory: parseInt(unitBlock.querySelector('[name="laboratorio"]')?.value) || null,
-          fk_disabled: defaultEstadoId,
-          fk_pending: defaultPendienteId
-        };
-        
-        // Validar datos de la unidad
-        if (!unitData.serial_number || !unitData.internal_code || !unitData.fk_guardian || 
-            !unitData.fk_area || !unitData.fk_location || !unitData.fk_laboratory) {
-          showMessage(`Unidad ${unitId}: faltan campos obligatorios.`, 'error');
-          return false;
+      if (responseText.trim()) {
+        try {
+          responseData = JSON.parse(responseText);
+          console.log('✅ Respuesta JSON parseada:', responseData);
+        } catch (parseError) {
+          console.warn('⚠️ Error parseando JSON:', parseError);
+          responseData = { success: true, message: 'Operación completada' };
         }
-        
-        const unitResponse = await fetch(`${API_BASE}/product_units/${unitId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(unitData)
+      } else {
+        responseData = { success: true, message: 'Operación completada sin respuesta' };
+      }
+    } else {
+      responseData = { success: true, message: 'Operación completada' };
+    }
+    
+    // Verificar si la actualización fue exitosa consultando la API
+    console.log('🔍 Verificando actualización...');
+    try {
+      const verifyResponse = await fetch(`${API_BASE}/product_units/${unitId}`);
+      if (verifyResponse.ok) {
+        const updatedUnit = await verifyResponse.json();
+        console.log('🔍 Datos actualizados verificados:', {
+          serial_number: updatedUnit.serial_number,
+          internal_code: updatedUnit.internal_code,
+          observations: updatedUnit.observations,
+          notes: updatedUnit.notes,
+          fk_status_label: updatedUnit.fk_status_label,
+          fk_guardian: updatedUnit.fk_guardian,
+          fk_area: updatedUnit.fk_area,
+          fk_location: updatedUnit.fk_location,
+          fk_laboratory: updatedUnit.fk_laboratory
         });
         
-        if (!unitResponse.ok) {
-          throw new Error(`Error actualizando unidad ${unitId}: HTTP ${unitResponse.status}`);
+        // Actualizar datos locales con los datos verificados
+        unitsData[currentUnitIndex].unit = updatedUnit;
+        
+        // Actualizar cache
+        const unitIndex = allProductUnits.findIndex(u => u.id_unit === parseInt(unitId));
+        if (unitIndex !== -1) {
+          allProductUnits[unitIndex] = updatedUnit;
         }
       }
+    } catch (verifyError) {
+      console.warn('⚠️ No se pudo verificar la actualización:', verifyError);
     }
     
-    showMessage(`Producto ${currentProduct.id} guardado exitosamente.`, 'success');
+    showMessage(`Unidad ${unitId} guardada exitosamente.`, 'success');
     return true;
     
   } catch (error) {
-    console.error('Error guardando producto:', error);
-    showMessage(`Error guardando producto: ${error.message}`, 'error');
+    console.error('❌ Error guardando unidad:', error);
+    showMessage(`Error guardando unidad: ${error.message}`, 'error');
     return false;
   }
 }
 
-// Inicialización
+// Guardar todas las unidades
+async function saveAllUnits() {
+  console.log('💾 Guardando todas las unidades...');
+  let successCount = 0;
+  let errorCount = 0;
+  
+  for (let i = 0; i < unitsData.length; i++) {
+    console.log(`💾 Guardando unidad ${i + 1}/${unitsData.length}...`);
+    
+    // Cambiar temporalmente el índice actual
+    const originalIndex = currentUnitIndex;
+    currentUnitIndex = i;
+    
+    try {
+      const success = await saveCurrentUnit();
+      if (success) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    } catch (error) {
+      console.error(`❌ Error guardando unidad ${i + 1}:`, error);
+      errorCount++;
+    }
+    
+    // Restaurar índice original
+    currentUnitIndex = originalIndex;
+  }
+  
+  if (successCount > 0) {
+    showMessage(`${successCount} unidades guardadas exitosamente.`, 'success');
+  }
+  if (errorCount > 0) {
+    showMessage(`${errorCount} unidades tuvieron errores al guardar.`, 'error');
+  }
+  
+  console.log(`✅ Proceso completado: ${successCount} éxitos, ${errorCount} errores`);
+}
+
+// Navegación entre unidades
+function navigateToUnit(direction) {
+  console.log(`🔄 Navegando ${direction}...`);
+  const newIndex = direction === 'prev' ? currentUnitIndex - 1 : currentUnitIndex + 1;
+  if (newIndex >= 0 && newIndex < unitsData.length) {
+    showUnit(newIndex);
+  }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🎯 Configurando event listeners...');
+  
+  const prevBtn = document.getElementById('prevProduct');
+  const nextBtn = document.getElementById('nextProduct');
+  const saveBtn = document.getElementById('saveCurrentUnit');
+  const saveAllBtn = document.getElementById('saveAllUnits');
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => navigateToUnit('prev'));
+    console.log('✅ Event listener prevBtn configurado');
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => navigateToUnit('next'));
+    console.log('✅ Event listener nextBtn configurado');
+  }
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveCurrentUnit);
+    console.log('✅ Event listener saveBtn configurado');
+  }
+  
+  if (saveAllBtn) {
+    saveAllBtn.addEventListener('click', saveAllUnits);
+    console.log('✅ Event listener saveAllBtn configurado');
+  }
+});
+
+// Inicialización principal
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 INICIANDO EDITOR DE PRODUCT UNITS...');
+  console.log('📍 DOMContentLoaded disparado');
+  console.log('🔍 localStorage selectedProducts:', localStorage.getItem('selectedProducts'));
+  
   try {
-    console.log('Iniciando carga de editar productos...');
-    
-    // Cargar valores por defecto
-    await loadDefaults();
-    
-    // Cargar selects básicos
-    const categoria = document.getElementById('categoria');
-    const marca = document.getElementById('marca');
-    const condicion = document.getElementById('condicion');
-    
-    if (categoria) await fillSelect(categoria, selectors.categoria);
-    if (marca) await fillSelect(marca, selectors.marca);
-    if (condicion) await fillSelect(condicion, selectors.condicion);
-    
-    // Cargar productos
-    await loadAllProducts();
-    
-    // Event listeners para navegación
-    const prevBtn = document.getElementById('prevProduct');
-    const nextBtn = document.getElementById('nextProduct');
-    
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (currentProductIndex > 0) {
-          showProduct(currentProductIndex - 1);
-        }
-      });
-    }
-    
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (currentProductIndex < productsData.length - 1) {
-          showProduct(currentProductIndex + 1);
-        }
-      });
-    }
-    
-    // Event listeners para guardado
-    const saveBtn = document.getElementById('saveProduct');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', async () => {
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
-        saveBtn.disabled = true;
-        
-        try {
-          await saveCurrentProduct();
-        } finally {
-          saveBtn.innerHTML = originalText;
-          saveBtn.disabled = false;
-        }
-      });
-    }
-    
-    const saveNextBtn = document.getElementById('saveAndNext');
-    if (saveNextBtn) {
-      saveNextBtn.addEventListener('click', async () => {
-        const originalText = saveNextBtn.innerHTML;
-        saveNextBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
-        saveNextBtn.disabled = true;
-        
-        try {
-          const saved = await saveCurrentProduct();
-          if (saved && currentProductIndex < productsData.length - 1) {
-            setTimeout(() => {
-              showProduct(currentProductIndex + 1);
-            }, 1000);
-          }
-        } finally {
-          saveNextBtn.innerHTML = originalText;
-          saveNextBtn.disabled = false;
-        }
-      });
-    }
-    
-    console.log('Editar productos inicializado correctamente');
+    console.log('🔄 Cargando unidades seleccionadas...');
+    await loadAllUnits();
+    console.log('✅ INICIALIZACIÓN COMPLETADA EXITOSAMENTE');
     
   } catch (error) {
-    console.error('Error en la inicialización:', error);
+    console.error('❌ ERROR EN LA INICIALIZACIÓN:', error);
     showMessage(`Error inicializando la página: ${error.message}`, 'error');
   }
 });
