@@ -180,7 +180,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Email</th>
                   <th>Grado</th>
                   <th>Grupo</th>
                   <th>Acciones</th>
@@ -224,7 +223,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -266,7 +264,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -301,7 +298,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -336,7 +332,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -371,7 +366,6 @@
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -448,10 +442,6 @@
               <div class="col-md-6">
                 <label class="form-label">Nombre *</label>
                 <input type="text" class="form-control" id="studentName" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Email *</label>
-                <input type="email" class="form-control" id="studentEmail" required>
               </div>
             </div>
           </form>
@@ -774,7 +764,6 @@
         <tr>
           <td>${student.id_student || student.id}</td>
           <td>${student.student_name || student.name}</td>
-          <td>${student.email || 'N/A'}</td>
           <td>${student.GradeInfo ? student.GradeInfo.grade : 'N/A'}</td>
           <td>${student.GroupInfo ? student.GroupInfo.group_name : 'N/A'}</td>
           <td>
@@ -803,7 +792,8 @@
       document.getElementById('studentModalTitle').textContent = 'Editar Estudiante';
       document.getElementById('studentId').value = student.id_student || student.id;
       document.getElementById('studentName').value = student.student_name || student.name;
-      document.getElementById('studentEmail').value = student.email || '';
+
+
       
       new bootstrap.Modal(document.getElementById('studentModal')).show();
     }
@@ -818,7 +808,6 @@
       const studentId = document.getElementById('studentId').value;
       const studentData = {
         student_name: document.getElementById('studentName').value,
-        email: document.getElementById('studentEmail').value
       };
 
       const endpoint = '/students';
@@ -850,172 +839,475 @@
       }
     }
 
-    // Generic CRUD operations for simple entities
-    async function loadGenericData(entity, tableBodyId) {
-      const tbody = document.getElementById(tableBodyId);
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center"><div class="loading"><div class="spinner-border spinner-border-custom" role="status"></div><p>Cargando ${entity}...</p></div></td></tr>`;
+// Brands
+async function loadBrands() {
+  const tbody = document.getElementById('brands-table-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center">
+        <div class="loading">
+          <div class="spinner-border spinner-border-custom" role="status"></div>
+          <p>Cargando marcas...</p>
+        </div>
+      </td>
+    </tr>
+  `;
 
-      const endpoint = entity === 'locations' ? '/location_' : 
-                      entity === 'areas' ? '/areas' :
-                      `/${entity}`;
-      
-      const data = await apiCall(endpoint);
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No se encontraron ${entity}</td></tr>`;
-        return;
-      }
+  const brands = await apiCall('/brands');
+  if (!brands || brands.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No se encontraron marcas</td></tr>';
+    return;
+  }
 
-      tbody.innerHTML = data.map(item => `
-        <tr>
-          <td>${item.id}</td>
-          <td>${item.name}</td>
-          <td>${item.description || 'Sin descripción'}</td>
-          <td>
-            <button class="btn btn-action btn-edit" onclick="editGenericItem('${entity}', ${item.id})" title="Editar">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-action btn-delete" onclick="deleteGenericItem('${entity}', ${item.id})" title="Eliminar">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
+  tbody.innerHTML = brands.map(brand => `
+    <tr>
+      <td>${brand.id_brand}</td>
+      <td>${brand.brand_name}</td>
+      <td>
+        <button class="btn btn-action btn-edit" onclick="editBrand('brands', ${brand.id_brand})" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-action btn-delete" onclick="deleteBrand('brands', ${brand.id_brand})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
 
-    // Specific load functions
-    async function loadBrands() { await loadGenericData('brands', 'brands-table-body'); }
-    async function loadCategories() { await loadGenericData('categories', 'categories-table-body'); }
-    async function loadAreas() { await loadGenericData('areas', 'areas-table-body'); }
-    async function loadLocations() { await loadGenericData('locations', 'locations-table-body'); }
-    async function loadLaboratories() { await loadGenericData('laboratories', 'laboratories-table-body'); }
+function openAddBrandModal() {
+  document.getElementById('brandModalTitle').textContent = 'Nueva Marca';
+  document.getElementById('brandForm').reset();
+  document.getElementById('brandId').value = '';
+  new bootstrap.Modal(document.getElementById('brandModal')).show();
+}
 
-    // Generic modal functions
-    function openGenericModal(type, title) {
-      document.getElementById('genericModalTitle').textContent = `Nueva ${title}`;
-      document.getElementById('genericType').value = type;
-      document.getElementById('genericForm').reset();
-      document.getElementById('genericId').value = '';
-      new bootstrap.Modal(document.getElementById('genericModal')).show();
-    }
+async function editBrand(id) {
+  const brand = await apiCall(`/brands/${id}`);
+  if (!brand) return;
 
-    // Specific add functions
-    function openAddBrandModal() { openGenericModal('brands', 'Marca'); }
-    function openAddCategoryModal() { openGenericModal('categories', 'Categoría'); }
-    function openAddAreaModal() { openGenericModal('areas', 'Área'); }
-    function openAddLocationModal() { openGenericModal('locations', 'Ubicación'); }
-    function openAddLaboratoryModal() { openGenericModal('laboratories', 'Laboratorio'); }
+  document.getElementById('brandModalTitle').textContent = 'Editar Marca';
+  document.getElementById('brandId').value = brand.id_brand;
+  document.getElementById('brandName').value = brand.brand_name;
 
-    async function editGenericItem(type, id) {
-      const endpoint = type === 'locations' ? '/location_' : 
-                      type === 'areas' ? '/areas' :
-                      `/${type}`;
-      
-      const item = await apiCall(`${endpoint}/${id}`);
-      if (!item) return;
+  new bootstrap.Modal(document.getElementById('brandModal')).show();
+}
 
-      const titles = {
-        brands: 'Marca',
-        categories: 'Categoría',
-        areas: 'Área',
-        locations: 'Ubicación',
-        laboratories: 'Laboratorio'
-      };
+async function saveBrand() {
+  const form = document.getElementById('brandForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
 
-      document.getElementById('genericModalTitle').textContent = `Editar ${titles[type]}`;
-      document.getElementById('genericType').value = type;
-      document.getElementById('genericId').value = item.id;
-      document.getElementById('genericName').value = item.name;
-      document.getElementById('genericDescription').value = item.description || '';
-      new bootstrap.Modal(document.getElementById('genericModal')).show();
-    }
+  const brandId = document.getElementById('brandId').value;
+  const brandData = {
+    brand_name: document.getElementById('brandName').value,
+  };
 
-    async function saveGeneric() {
-      const form = document.getElementById('genericForm');
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
+  const endpoint = '/brands';
+  const method = brandId ? 'PUT' : 'POST';
 
-      const type = document.getElementById('genericType').value;
-      const id = document.getElementById('genericId').value;
-      const data = {
-        name: document.getElementById('genericName').value,
-        description: document.getElementById('genericDescription').value || null
-      };
+  if (brandId) brandData.id_brand = parseInt(brandId);
 
-      const endpoint = type === 'locations' ? '/location_' : 
-                      type === 'areas' ? '/areas' :
-                      `/${type}`;
-      
-      const method = id ? 'PUT' : 'POST';
-      if (id) {
-        data.id = parseInt(id);
-      }
+  const result = await apiCall(endpoint, method, brandData);
+  if (result !== null) {
+    showAlert(`Marca ${brandId ? 'actualizada' : 'creada'} exitosamente`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('brandModal')).hide();
+    loadBrands();
+  }
+}
 
-      const result = await apiCall(endpoint, method, data);
-      if (result !== null) {
-        const titles = {
-          brands: 'Marca',
-          categories: 'Categoría',
-          areas: 'Área',
-          locations: 'Ubicación',
-          laboratories: 'Laboratorio'
-        };
-        showAlert(`${titles[type]} ${id ? 'actualizada' : 'creada'} exitosamente`, 'success');
-        bootstrap.Modal.getInstance(document.getElementById('genericModal')).hide();
-        
-        // Reload appropriate data
-        switch(type) {
-          case 'brands': loadBrands(); break;
-          case 'categories': loadCategories(); break;
-          case 'areas': loadAreas(); break;
-          case 'locations': loadLocations(); break;
-          case 'laboratories': loadLaboratories(); break;
-        }
-      }
-    }
+function deleteBrand(id) {
+  confirmAction = () => executeDeleteBrand(id);
+  document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar esta marca? Esta acción no se puede deshacer.';
+  new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
 
-    function deleteGenericItem(type, id) {
-      const titles = {
-        brands: 'marca',
-        categories: 'categoría',
-        areas: 'área',
-        locations: 'ubicación',
-        laboratories: 'laboratorio'
-      };
-      
-      confirmAction = () => executeDeleteGeneric(type, id);
-      document.getElementById('confirmMessage').textContent = `¿Está seguro de que desea eliminar esta ${titles[type]}? Esta acción no se puede deshacer.`;
-      new bootstrap.Modal(document.getElementById('confirmModal')).show();
-    }
+async function executeDeleteBrand(id) {
+  const result = await apiCall(`/brands/Delete?id=${id}`, 'POST');
+  if (result !== null) {
+    showAlert('Marca eliminada exitosamente', 'success');
+    loadBrands();
+  }
+}
 
-    async function executeDeleteGeneric(type, id) {
-      const deleteEndpoint = type === 'locations' ? '/location_/Delete?id=' : 
-                            type === 'areas' ? '/area/Delete?id=' :
-                            type === 'brands' ? '/brand/Delete?id=' :
-                            `/${type}/Delete?id=`;
-      
-      const result = await apiCall(`${deleteEndpoint}${id}`, 'POST');
-      if (result !== null) {
-        const titles = {
-          brands: 'Marca',
-          categories: 'Categoría',
-          areas: 'Área',
-          locations: 'Ubicación',
-          laboratories: 'Laboratorio'
-        };
-        showAlert(`${titles[type]} eliminada exitosamente`, 'success');
-        
-        // Reload appropriate data
-        switch(type) {
-          case 'brands': loadBrands(); break;
-          case 'categories': loadCategories(); break;
-          case 'areas': loadAreas(); break;
-          case 'locations': loadLocations(); break;
-          case 'laboratories': loadLaboratories(); break;
-        }
-      }
-    }
+
+// Categories
+async function loadCategories() {
+  const tbody = document.getElementById('categories-table-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center">
+        <div class="loading">
+          <div class="spinner-border spinner-border-custom" role="status"></div>
+          <p>Cargando categorías...</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const categories = await apiCall('/categories');
+  if (!categories || categories.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No se encontraron categorías</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = categories.map(cat => `
+    <tr>
+      <td>${cat.id_category}</td>
+      <td>${cat.category_name}</td>
+      <td>
+        <button class="btn btn-action btn-edit" onclick="editGenericItem('categories', ${cat.id_category})" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-action btn-delete" onclick="deleteGenericItem('categories', ${cat.id_category})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddCategoryModal() {
+  document.getElementById('categoryModalTitle').textContent = 'Nueva Categoría';
+  document.getElementById('categoryForm').reset();
+  document.getElementById('categoryId').value = '';
+  new bootstrap.Modal(document.getElementById('categoryModal')).show();
+}
+
+async function editCategory(id) {
+  const category = await apiCall(`/categories/${id}`);
+  if (!category) return;
+
+  document.getElementById('categoryModalTitle').textContent = 'Editar Categoría';
+  document.getElementById('categoryId').value = category.id_category;
+  document.getElementById('categoryName').value = category.category_name;
+
+  new bootstrap.Modal(document.getElementById('categoryModal')).show();
+}
+
+async function saveCategory() {
+  const form = document.getElementById('categoryForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const categoryId = document.getElementById('categoryId').value;
+  const categoryData = {
+    category_name: document.getElementById('categoryName').value,
+  };
+
+  const endpoint = '/categories';
+  const method = categoryId ? 'PUT' : 'POST';
+
+  if (categoryId) categoryData.id_category = parseInt(categoryId);
+
+  const result = await apiCall(endpoint, method, categoryData);
+  if (result !== null) {
+    showAlert(`Categoría ${categoryId ? 'actualizada' : 'creada'} exitosamente`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+    loadCategories();
+  }
+}
+
+function deleteCategory(id) {
+  confirmAction = () => executeDeleteCategory(id);
+  document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar esta categoría? Esta acción no se puede deshacer.';
+  new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+async function executeDeleteCategory(id) {
+  const result = await apiCall(`/categories/Delete?id=${id}`, 'POST');
+  if (result !== null) {
+    showAlert('Categoría eliminada exitosamente', 'success');
+    loadCategories();
+  }
+}
+
+
+// Areas
+async function loadAreas() {
+  const tbody = document.getElementById('areas-table-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center">
+        <div class="loading">
+          <div class="spinner-border spinner-border-custom" role="status"></div>
+          <p>Cargando áreas...</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const areas = await apiCall('/areas');
+  if (!areas || areas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No se encontraron áreas</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = areas.map(area => `
+    <tr>
+      <td>${area.id_area}</td>
+      <td>${area.area_name}</td>
+      <td>
+        <button class="btn btn-action btn-edit" onclick="editGenericItem('areas', ${area.id_area})" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-action btn-delete" onclick="deleteGenericItem('areas', ${area.id_area})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddAreaModal() {
+  document.getElementById('areaModalTitle').textContent = 'Nueva Área';
+  document.getElementById('areaForm').reset();
+  document.getElementById('areaId').value = '';
+  new bootstrap.Modal(document.getElementById('areaModal')).show();
+}
+
+async function editArea(id) {
+  const area = await apiCall(`/areas/${id}`);
+  if (!area) return;
+
+  document.getElementById('areaModalTitle').textContent = 'Editar Área';
+  document.getElementById('areaId').value = area.id_area;
+  document.getElementById('areaName').value = area.area_name;
+
+  new bootstrap.Modal(document.getElementById('areaModal')).show();
+}
+
+async function saveArea() {
+  const form = document.getElementById('areaForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const areaId = document.getElementById('areaId').value;
+  const areaData = {
+    area_name: document.getElementById('areaName').value,
+  };
+
+  const endpoint = '/areas';
+  const method = areaId ? 'PUT' : 'POST';
+
+  if (areaId) areaData.id_area = parseInt(areaId);
+
+  const result = await apiCall(endpoint, method, areaData);
+  if (result !== null) {
+    showAlert(`Área ${areaId ? 'actualizada' : 'creada'} exitosamente`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('areaModal')).hide();
+    loadAreas();
+  }
+}
+
+function deleteArea(id) {
+  confirmAction = () => executeDeleteArea(id);
+  document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar esta área? Esta acción no se puede deshacer.';
+  new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+async function executeDeleteArea(id) {
+  const result = await apiCall(`/areas/Delete?id=${id}`, 'POST');
+  if (result !== null) {
+    showAlert('Área eliminada exitosamente', 'success');
+    loadAreas();
+  }
+}
+
+
+// Locations
+async function loadLocations() {
+  const tbody = document.getElementById('locations-table-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center">
+        <div class="loading">
+          <div class="spinner-border spinner-border-custom" role="status"></div>
+          <p>Cargando ubicaciones...</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const locations = await apiCall('/location_');
+  if (!locations || locations.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No se encontraron ubicaciones</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = locations.map(loc => `
+    <tr>
+      <td>${loc.id_location}</td>
+      <td>${loc.location_name}</td>
+      <td>
+        <button class="btn btn-action btn-edit" onclick="editGenericItem('location_', ${loc.id_location})" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-action btn-delete" onclick="deleteGenericItem('location_', ${loc.id_location})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddLocationModal() {
+  document.getElementById('locationModalTitle').textContent = 'Nueva Ubicación';
+  document.getElementById('locationForm').reset();
+  document.getElementById('locationId').value = '';
+  new bootstrap.Modal(document.getElementById('locationModal')).show();
+}
+
+async function editLocation(id) {
+  const location = await apiCall(`/location_/${id}`);
+  if (!location) return;
+
+  document.getElementById('locationModalTitle').textContent = 'Editar Ubicación';
+  document.getElementById('locationId').value = location.id_location;
+  document.getElementById('locationName').value = location.location_name;
+
+  new bootstrap.Modal(document.getElementById('locationModal')).show();
+}
+
+async function saveLocation() {
+  const form = document.getElementById('locationForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const locationId = document.getElementById('locationId').value;
+  const locationData = {
+    location_name: document.getElementById('locationName').value,
+  };
+
+  const endpoint = '/location_';
+  const method = locationId ? 'PUT' : 'POST';
+
+  if (locationId) locationData.id_location = parseInt(locationId);
+
+  const result = await apiCall(endpoint, method, locationData);
+  if (result !== null) {
+    showAlert(`Ubicación ${locationId ? 'actualizada' : 'creada'} exitosamente`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('locationModal')).hide();
+    loadLocations();
+  }
+}
+
+function deleteLocation(id) {
+  confirmAction = () => executeDeleteLocation(id);
+  document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar esta ubicación? Esta acción no se puede deshacer.';
+  new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+async function executeDeleteLocation(id) {
+  const result = await apiCall(`/location_/Delete?id=${id}`, 'POST');
+  if (result !== null) {
+    showAlert('Ubicación eliminada exitosamente', 'success');
+    loadLocations();
+  }
+}
+
+
+// Laboratories
+async function loadLaboratories() {
+  const tbody = document.getElementById('laboratories-table-body');
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="3" class="text-center">
+        <div class="loading">
+          <div class="spinner-border spinner-border-custom" role="status"></div>
+          <p>Cargando laboratorios...</p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const labs = await apiCall('/laboratories');
+  if (!labs || labs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">No se encontraron laboratorios</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = labs.map(lab => `
+    <tr>
+      <td>${lab.id_lab}</td>
+      <td>${lab.lab_name}</td>
+      <td>
+        <button class="btn btn-action btn-edit" onclick="editGenericItem('laboratories', ${lab.id_lab})" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-action btn-delete" onclick="deleteGenericItem('laboratories', ${lab.id_lab})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+     
+function openAddLaboratoryModal() {
+  document.getElementById('labModalTitle').textContent = 'Nuevo Laboratorio';
+  document.getElementById('labForm').reset();
+  document.getElementById('labId').value = '';
+  new bootstrap.Modal(document.getElementById('labModal')).show();
+}
+
+async function editLaboratory(id) {
+  const lab = await apiCall(`/laboratories/${id}`);
+  if (!lab) return;
+
+  document.getElementById('labModalTitle').textContent = 'Editar Laboratorio';
+  document.getElementById('labId').value = lab.id_lab;
+  document.getElementById('labName').value = lab.lab_name;
+
+  new bootstrap.Modal(document.getElementById('labModal')).show();
+}
+
+async function saveLaboratory() {
+  const form = document.getElementById('labForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const labId = document.getElementById('labId').value;
+  const labData = {
+    lab_name: document.getElementById('labName').value,
+  };
+
+  const endpoint = '/laboratories';
+  const method = labId ? 'PUT' : 'POST';
+
+  if (labId) labData.id_lab = parseInt(labId);
+
+  const result = await apiCall(endpoint, method, labData);
+  if (result !== null) {
+    showAlert(`Laboratorio ${labId ? 'actualizado' : 'creado'} exitosamente`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('labModal')).hide();
+    loadLaboratories();
+  }
+}
+
+function deleteLaboratory(id) {
+  confirmAction = () => executeDeleteLaboratory(id);
+  document.getElementById('confirmMessage').textContent = '¿Está seguro de que desea eliminar este laboratorio? Esta acción no se puede deshacer.';
+  new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+async function executeDeleteLaboratory(id) {
+  const result = await apiCall(`/laboratories/Delete?id=${id}`, 'POST');
+  if (result !== null) {
+    showAlert('Laboratorio eliminado exitosamente', 'success');
+    loadLaboratories();
+  }
+}
+
 
     // Utility functions
     function togglePassword(inputId) {
